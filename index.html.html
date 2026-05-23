@@ -1,0 +1,469 @@
+<html lang="es"><head>
+<meta charset="UTF-8">
+<title>Sopa de Letras 3D - 25 de Mayo</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#0e1620;
+    font-family:Arial;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    width:90%;
+    max-width:340px;
+    background:rgba(0,0,0,0.85);
+    color:white;
+    padding:14px;
+    border-radius:10px;
+    z-index:10;
+    pointer-events: none; 
+}
+
+#ui * {
+    pointer-events: auto; 
+}
+
+h1{
+    margin:0;
+    font-size:18px;
+    color:#87cefa;
+}
+
+ul{
+    columns:2;
+    padding-left:18px;
+    font-size: 13px;
+    margin: 8px 0 0 0;
+}
+
+li.done{
+    text-decoration: line-through;
+    color:#7CFC00;
+    font-weight: bold;
+}
+
+/* --- JOYSTICK VIRTUAL EN LA ESQUINA --- */
+#joystick-container {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 3px solid rgba(135, 206, 250, 0.6);
+    border-radius: 50%;
+    z-index: 20;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+#joystick-knob {
+    width: 40px;
+    height: 40px;
+    background: #87cefa;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.05s linear;
+}
+
+/* Indicador de palabra flotante */
+#word-preview {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    z-index: 10;
+    border: 2px solid #87cefa;
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+<h1>🇦🇷 Sopa de Letras 3D</h1>
+<ul id="list">
+<li data-word="REVOLUCION">REVOLUCION</li>
+<li data-word="CABILDO">CABILDO</li>
+<li data-word="PATRIA">PATRIA</li>
+<li data-word="MORENO">MORENO</li>
+<li data-word="SAAVEDRA">SAAVEDRA</li>
+<li data-word="ESCARAPELA">ESCARAPELA</li>
+<li data-word="VIRREY">VIRREY</li>
+<li data-word="JUNTA">JUNTA</li>
+<li data-word="LIBERTAD">LIBERTAD</li>
+<li data-word="ARGENTINA">ARGENTINA</li>
+<li data-word="LOCRO">LOCRO</li>
+<li data-word="EMPANADAS">EMPANADAS</li>
+</ul>
+</div>
+
+<div id="joystick-container">
+    <div id="joystick-knob"></div>
+</div>
+
+<div id="word-preview"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+
+/* =========================
+   ESCENA Y CONFIGURACIÓN
+========================= */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1620);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+camera.position.z = 95;
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.3));
+
+/* =========================
+   GRUPO PRINCIPAL Y LETRAS
+========================= */
+const mainGlobe = new THREE.Group();
+scene.add(mainGlobe);
+
+// Array dedicado para el Raycaster que contendrá SOLAMENTE los sprites de las letras
+const letterSprites = [];
+
+/* ESFERA FONDO */
+const RADIUS = 45;
+const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(RADIUS, 64, 64),
+    new THREE.MeshBasicMaterial({ color: 0x1b2a4a }) 
+);
+mainGlobe.add(sphere);
+
+/* SOLUCIÓN AL BUG 1: Forzar materiales independientes únicos */
+function createLetter(char){
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+
+    ctx.font = "bold 85px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff"; 
+    ctx.fillText(char.toUpperCase(),128,128);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    // Cada letra tiene su propia instancia de material
+    const mat = new THREE.SpriteMaterial({ map:tex, transparent:true, color: 0xffffff });
+    mat.depthTest = true;
+    mat.depthWrite = false;
+
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(6.5,6.5,6.5);
+    return sprite;
+}
+
+function spherical(lat, lon, radius){
+    const phi = (90-lat)*Math.PI/180;
+    const theta = lon*Math.PI/180;
+    return new THREE.Vector3(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+    );
+}
+
+/* GENERACIÓN DE GRILLA */
+const rows = 22;
+const cols = 44;
+const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+let grid = [];
+
+// Flag para saber si la celda fue ocupada por una palabra real
+for(let i=0;i<rows;i++){
+    const lat = 90 - i * 180/(rows-1);
+    for(let j=0;j<cols;j++){
+        const lon = j * 360/cols;
+        grid.push({ lat, lon, char:letters[Math.floor(Math.random()*letters.length)], isFixed: false });
+    }
+}
+
+const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
+
+/* SOLUCIÓN AL BUG 2: Evitar colisiones destructivas entre palabras */
+function placeWord(word){
+    let placed = false;
+    let attempts = 0;
+    
+    while(!placed && attempts < 100) {
+        attempts++;
+        const row = Math.floor(Math.random() * (rows - 2)) + 1;
+        const col = Math.floor(Math.random() * (cols - word.length - 2));
+        
+        let canPlace = true;
+        // Verificar si el espacio está libre o tiene la misma letra
+        for(let k=0; k<word.length; k++) {
+            let index = row * cols + (col + k);
+            if(grid[index].isFixed && grid[index].char !== word[k]) {
+                canPlace = false;
+                break;
+            }
+        }
+        
+        if(canPlace) {
+            for(let k=0; k<word.length; k++) {
+                let index = row * cols + (col + k);
+                grid[index].char = word[k];
+                grid[index].isFixed = true; 
+            }
+            placed = true;
+        }
+    }
+}
+words.forEach(placeWord);
+
+const OFFSET = 0.8;
+grid.forEach((cell, idx)=>{
+    const pos = spherical(cell.lat,cell.lon,RADIUS+OFFSET);
+    const sprite = createLetter(cell.char);
+    sprite.position.copy(pos);
+    
+    sprite.userData = { 
+        id: idx,
+        char: cell.char, 
+        isLetter: true,
+        isFound: false 
+    };
+    mainGlobe.add(sprite);
+    letterSprites.push(sprite); // Lo guardamos en nuestro array de control para el Raycaster
+});
+
+/* =========================
+   MECÁNICA: CONECTAR LETRAS
+========================= */
+let isDrawing = false;
+let currentSelectionPath = [];
+let selectedWordString = "";
+let foundWords = new Set();
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const previewEl = document.getElementById("word-preview");
+
+function getPointerCoords(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+function onPointerStart(e) {
+    if(e.target.closest('#ui') || e.target.closest('#joystick-container')) return;
+
+    const coords = getPointerCoords(e);
+    const hitSprite = getSpriteAtCoords(coords.x, coords.y);
+
+    if (hitSprite && !hitSprite.userData.isFound) {
+        isDrawing = true;
+        addLetterToPath(hitSprite);
+    }
+}
+
+function onPointerMove(e) {
+    if (!isDrawing) return;
+
+    const coords = getPointerCoords(e);
+    const hitSprite = getSpriteAtCoords(coords.x, coords.y);
+
+    if (hitSprite && !hitSprite.userData.isFound) {
+        const alreadyInPath = currentSelectionPath.some(s => s.userData.id === hitSprite.userData.id);
+        if (!alreadyInPath) {
+            addLetterToPath(hitSprite);
+        }
+    }
+}
+
+function onPointerEnd() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    verifyCurrentWord();
+}
+
+/* SOLUCIÓN AL BUG 3: Filtrar intersecciones apuntando solo a letterSprites */
+function getSpriteAtCoords(clientX, clientY) {
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Ignoramos la esfera de fondo testeando solo las letras directamente
+    const hits = raycaster.intersectObjects(letterSprites, false);
+    return hits.length > 0 ? hits[0].object : null;
+}
+
+function addLetterToPath(sprite) {
+    currentSelectionPath.push(sprite);
+    selectedWordString += sprite.userData.char;
+
+    sprite.material.color.set(0x00e5ff); // Celeste patrio para la selección
+
+    previewEl.style.display = "block";
+    previewEl.innerText = selectedWordString;
+}
+
+function verifyCurrentWord() {
+    if (selectedWordString.length === 0) return;
+
+    let isCorrect = false;
+    let wordMatched = "";
+
+    for (let w of words) {
+        if (!foundWords.has(w) && selectedWordString === w) {
+            isCorrect = true;
+            wordMatched = w;
+            break;
+        }
+    }
+
+    if (isCorrect) {
+        foundWords.add(wordMatched);
+        document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
+
+        currentSelectionPath.forEach(sprite => {
+            sprite.material.color.set(0x00ff66); 
+            sprite.userData.isFound = true;       
+        });
+        resetSelectionState(true);
+    } else {
+        currentSelectionPath.forEach(sprite => {
+            sprite.material.color.set(0xff4d4d); 
+        });
+
+        const pathRef = [...currentSelectionPath]; 
+        setTimeout(() => {
+            pathRef.forEach(sprite => {
+                if (!sprite.userData.isFound) {
+                    sprite.material.color.set(0xffffff); 
+                }
+            });
+        }, 500);
+
+        resetSelectionState(false);
+    }
+}
+
+function resetSelectionState(wasCorrect) {
+    selectedWordString = "";
+    currentSelectionPath = [];
+    setTimeout(() => {
+        if(!isDrawing) previewEl.style.display = "none";
+    }, wasCorrect ? 500 : 0);
+}
+
+// Eventos del juego
+window.addEventListener("mousedown", onPointerStart);
+window.addEventListener("mousemove", onPointerMove);
+window.addEventListener("mouseup", onPointerEnd);
+
+window.addEventListener("touchstart", onPointerStart, { passive: true });
+window.addEventListener("touchmove", onPointerMove, { passive: true });
+window.addEventListener("touchend", onPointerEnd);
+
+
+/* =========================
+   LÓGICA DEL JOYSTICK VIRTUAL
+========================= */
+const joystickContainer = document.getElementById("joystick-container");
+const joystickKnob = document.getElementById("joystick-knob");
+
+let joystickActive = false;
+let joystickVector = { x: 0, y: 0 };
+
+function handleJoystickStart(e) {
+    joystickActive = true;
+    handleJoystickMove(e);
+}
+
+function handleJoystickMove(e) {
+    if (!joystickActive) return;
+    
+    const rect = joystickContainer.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const pointer = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+    
+    let deltaX = pointer.clientX - centerX;
+    let deltaY = pointer.clientY - centerY;
+    
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const maxDistance = rect.width / 2 - 10; 
+
+    if (distance > maxDistance) {
+        deltaX = (deltaX / distance) * maxDistance;
+        deltaY = (deltaY / distance) * maxDistance;
+    }
+
+    joystickKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+    joystickVector.x = deltaX / maxDistance;
+    joystickVector.y = deltaY / maxDistance;
+}
+
+function handleJoystickEnd() {
+    joystickActive = false;
+    joystickVector = { x: 0, y: 0 };
+    joystickKnob.style.transform = "translate(0px, 0px)"; 
+}
+
+joystickContainer.addEventListener("mousedown", handleJoystickStart);
+window.addEventListener("mousemove", handleJoystickMove);
+window.addEventListener("mouseup", handleJoystickEnd);
+
+joystickContainer.addEventListener("touchstart", handleJoystickStart, { passive: true });
+window.addEventListener("touchmove", handleJoystickMove, { passive: false });
+window.addEventListener("touchend", handleJoystickEnd);
+
+
+/* =========================
+   LOOP DE ANIMACIÓN
+========================= */
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (joystickActive) {
+        mainGlobe.rotation.y += joystickVector.x * 0.04;
+        mainGlobe.rotation.x += joystickVector.y * 0.04;
+    }
+
+    renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+</script>
+</body></html>
