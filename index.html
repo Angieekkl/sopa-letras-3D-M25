@@ -15,16 +15,17 @@ body{
 
 #ui{
     position:absolute;
-    top:10px;
-    left:10px;
-    width:90%;
-    max-width:340px;
-    background:rgba(0,0,0,0.85);
+    top:15px;
+    left:15px;
+    width:92%;
+    max-width:380px; /* MODIFICACIÓN: Cuadro un poco más ancho */
+    background:rgba(0,0,0,0.88);
     color:white;
-    padding:14px;
-    border-radius:10px;
+    padding:18px; /* MODIFICACIÓN: Más padding para legibilidad */
+    border-radius:12px;
     z-index:10;
     pointer-events: none; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
 
 #ui * {
@@ -32,16 +33,18 @@ body{
 }
 
 h1{
-    margin:0;
-    font-size:18px;
+    margin:0 0 10px 0;
+    font-size:22px; /* MODIFICACIÓN: Título más grande */
     color:#87cefa;
+    text-align: center;
 }
 
 ul{
     columns:2;
     padding-left:18px;
-    font-size: 13px;
-    margin: 8px 0 0 0;
+    font-size: 16px; /* MODIFICACIÓN: Letras de la lista más grandes para leer fácil */
+    margin: 0;
+    line-height: 1.5;
 }
 
 li.done{
@@ -50,13 +53,13 @@ li.done{
     font-weight: bold;
 }
 
-/* --- JOYSTICK VIRTUAL EN LA ESQUINA --- */
+/* --- JOYSTICK VIRTUAL REPOSICIONADO Y AGRANDADO --- */
 #joystick-container {
     position: absolute;
-    bottom: 30px;
-    right: 30px;
-    width: 100px;
-    height: 100px;
+    bottom: 50px; /* MODIFICACIÓN: Separado del borde inferior */
+    right: 50px;  /* MODIFICACIÓN: Separado del borde derecho (más al centro) */
+    width: 120px; /* MODIFICACIÓN: Más grande (antes 100px) */
+    height: 120px;/* MODIFICACIÓN: Más grande (antes 100px) */
     background: rgba(255, 255, 255, 0.15);
     border: 3px solid rgba(135, 206, 250, 0.6);
     border-radius: 50%;
@@ -65,34 +68,54 @@ li.done{
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
 }
 
 #joystick-knob {
-    width: 40px;
-    height: 40px;
+    width: 50px; /* MODIFICACIÓN: Pomo más grande (antes 40px) */
+    height: 50px;
     background: #87cefa;
     border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     transition: transform 0.05s linear;
 }
 
 /* Indicador de palabra flotante */
 #word-preview {
     position: absolute;
-    bottom: 30px;
+    bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     color: #fff;
-    padding: 12px 25px;
-    border-radius: 25px;
-    font-size: 22px;
+    padding: 14px 30px;
+    border-radius: 30px;
+    font-size: 24px;
     font-weight: bold;
     letter-spacing: 3px;
     z-index: 10;
     border: 2px solid #87cefa;
     display: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+/* Ajustes específicos para pantallas horizontales cortas (Celulares de costado) */
+@media (max-height: 500px) and (orientation: landscape) {
+    #ui {
+        max-width: 240px;
+        padding: 8px;
+        top: 8px;
+        left: 8px;
+    }
+    h1 { font-size: 16px; margin-bottom: 4px; }
+    ul { font-size: 12px; line-height: 1.3; }
+    #joystick-container {
+        bottom: 20px;
+        right: 40px;
+        width: 90px;
+        height: 90px;
+    }
+    #joystick-knob { width: 38px; height: 38px; }
 }
 </style>
 </head>
@@ -135,23 +158,19 @@ scene.background = new THREE.Color(0x0e1620);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
 
-// MODIFICACIÓN EXCLUSIVA: Adaptación matemática inteligente para pantallas horizontales o verticales
+// MODIFICACIÓN: Achicamos más la esfera alejando la cámara sutilmente en todos los modos
 function updateCameraDistance() {
     const aspect = window.innerWidth / window.innerHeight;
-    const isMobile = window.innerWidth < 1024; // Detecta celulares y tablets
+    const isMobile = window.innerWidth < 1024;
 
     if (isMobile) {
         if (aspect > 1) {
-            // El celular está en HORIZONTAL (landscape). Como el alto disminuye mucho,
-            // alejamos bastante más la cámara para que la esfera no se corte arriba/abajo.
-            camera.position.z = 160; 
+            camera.position.z = 185; // Antes 160 (Se alejó más para dar espacio al UI horizontal)
         } else {
-            // El celular está en VERTICAL (portrait).
-            camera.position.z = 125;
+            camera.position.z = 145; // Antes 125 (Se alejó para centrarla mejor y que no toque los bordes)
         }
     } else {
-        // Computadora de escritorio / Notebook estándar
-        camera.position.z = 95;
+        camera.position.z = 110; // Antes 95
     }
 }
 updateCameraDistance();
@@ -239,7 +258,7 @@ for(let i=0; i<rows; i++){
 
 const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
 
-/* UBICACIÓN DE PALABRAS EN LA NUEVA GRILLA LINEAL */
+/* UBICACIÓN DE PALABRAS EN LA GRILLA */
 function placeWord(word){
     let placed = false;
     let attempts = 0;
@@ -292,12 +311,13 @@ grid.forEach((cell, idx)=>{
 });
 
 /* =========================
-   SISTEMA DE PARTÍCULAS (CELESTES Y BLANCAS)
+   SISTEMA DE PARTÍCULAS MEJORADO (CONFETI AL CENTRO)
 ========================= */
 let particles = [];
 
-function createWordParticles(originPoints) {
-    const particleCount = 25;
+// MODIFICACIÓN: Ahora las partículas se generan directamente en el centro de la pantalla
+function createWordParticlesCentric() {
+    const particleCount = 120; // MODIFICACIÓN: Más partículas para que sea más grande y vistoso
     
     const pGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
@@ -307,54 +327,54 @@ function createWordParticles(originPoints) {
     const colorWhite = new THREE.Color(0xffffff);
     const colorBlue = new THREE.Color(0x87cefa);
 
-    originPoints.forEach((pos, index) => {
-        for(let i=0; i<particleCount; i++) {
-            const pIndex = i * 3;
-            positions[pIndex] = pos.x;
-            positions[pIndex+1] = pos.y;
-            positions[pIndex+2] = pos.z;
+    // Origen: (0,0,0) con un ligero offset para simular una explosión esférica central
+    for(let i=0; i<particleCount; i++) {
+        const pIndex = i * 3;
+        positions[pIndex] = (Math.random() - 0.5) * 5;
+        positions[pIndex+1] = (Math.random() - 0.5) * 5;
+        positions[pIndex+2] = 20; // MODIFICACIÓN: Un poco adelantado hacia la cámara para que resalte adelante de la esfera
 
-            const chosenColor = Math.random() > 0.5 ? colorWhite : colorBlue;
-            colors[pIndex] = chosenColor.r;
-            colors[pIndex+1] = chosenColor.g;
-            colors[pIndex+2] = chosenColor.b;
+        const chosenColor = Math.random() > 0.5 ? colorWhite : colorBlue;
+        colors[pIndex] = chosenColor.r;
+        colors[pIndex+1] = chosenColor.g;
+        colors[pIndex+2] = chosenColor.b;
 
-            velocities.push(new THREE.Vector3(
-                (Math.random() - 0.5) * 1.5,
-                (Math.random() - 0.5) * 1.5,
-                (Math.random() - 0.5) * 1.5
-            ));
-        }
+        // Velocidades explosivas radiales y amplias
+        velocities.push(new THREE.Vector3(
+            (Math.random() - 0.5) * 2.5,
+            (Math.random() - 0.5) * 2.5,
+            (Math.random() - 0.5) * 2.5
+        ));
+    }
 
-        pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        const pMat = new THREE.PointsMaterial({
-            size: 2.5,
-            vertexColors: true,
-            transparent: true,
-            opacity: 1.0,
-            depthWrite: false
-        });
+    const pMat = new THREE.PointsMaterial({
+        size: 3.5, // MODIFICACIÓN: Partículas un poco más grandes
+        vertexColors: true,
+        transparent: true,
+        opacity: 1.0,
+        depthWrite: false
+    });
 
-        const pSystem = new THREE.Points(pGeo, pMat);
-        mainGlobe.add(pSystem);
+    const pSystem = new THREE.Points(pGeo, pMat);
+    scene.add(pSystem); // Agregado a la ESCENA directamente (no al globo) para que la explosión se quede estática en el centro
 
-        particles.push({
-            system: pSystem,
-            velocities: velocities,
-            life: 1.0 
-        });
+    particles.push({
+        system: pSystem,
+        velocities: velocities,
+        life: 1.0 
     });
 }
 
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const pData = particles[i];
-        pData.life -= 0.02; 
+        pData.life -= 0.015; // Desvanecimiento suave
 
         if (pData.life <= 0) {
-            mainGlobe.remove(pData.system);
+            scene.remove(pData.system);
             pData.system.geometry.dispose();
             pData.system.material.dispose();
             particles.splice(i, 1);
@@ -462,8 +482,8 @@ function verifyCurrentWord() {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
 
-        const originPositions = currentSelectionPath.map(sprite => sprite.position.clone());
-        createWordParticles(originPositions);
+        // MODIFICACIÓN: Ejecuta la explosión grande y festiva justo en el centro de la pantalla
+        createWordParticlesCentric();
 
         currentSelectionPath.forEach(sprite => {
             sprite.material.color.set(0x00ff66); 
@@ -597,7 +617,7 @@ window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    updateCameraDistance(); // Recalcula la distancia óptima dinámicamente al girar la pantalla
+    updateCameraDistance(); 
 });
 
 </script>
