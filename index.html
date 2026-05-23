@@ -135,10 +135,24 @@ scene.background = new THREE.Color(0x0e1620);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
 
-// Adaptación de tamaño de la esfera según dispositivo (Notebook vs Celular)
+// MODIFICACIÓN EXCLUSIVA: Adaptación matemática inteligente para pantallas horizontales o verticales
 function updateCameraDistance() {
-    const isMobile = window.innerWidth < 768;
-    camera.position.z = isMobile ? 125 : 95; // Aleja la cámara en móviles para achicar la esfera visualmente
+    const aspect = window.innerWidth / window.innerHeight;
+    const isMobile = window.innerWidth < 1024; // Detecta celulares y tablets
+
+    if (isMobile) {
+        if (aspect > 1) {
+            // El celular está en HORIZONTAL (landscape). Como el alto disminuye mucho,
+            // alejamos bastante más la cámara para que la esfera no se corte arriba/abajo.
+            camera.position.z = 160; 
+        } else {
+            // El celular está en VERTICAL (portrait).
+            camera.position.z = 125;
+        }
+    } else {
+        // Computadora de escritorio / Notebook estándar
+        camera.position.z = 95;
+    }
 }
 updateCameraDistance();
 
@@ -203,13 +217,11 @@ const maxCols = 44;
 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 let grid = [];
 
-// Tu lógica para ir reduciendo las columnas a medida que nos acercamos a los polos:
 for(let i=0; i<rows; i++){
     const lat = 90 - i * 180/(rows-1);
     
-    // Calculamos cuántas columnas corresponden a esta latitud para mantener distancias parejas
     let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
-    if (colsInRow < 1) colsInRow = 1; // Al menos una letra en el polo absoluto
+    if (colsInRow < 1) colsInRow = 1; 
 
     for(let j=0; j<colsInRow; j++){
         const lon = j * 360/colsInRow;
@@ -235,10 +247,7 @@ function placeWord(word){
     while(!placed && attempts < 200) {
         attempts++;
         
-        // Buscamos una fila al azar que no sea el extremo absoluto de los polos
         const targetRow = Math.floor(Math.random() * (rows - 4)) + 2;
-        
-        // Filtramos las celdas disponibles que pertenezcan a esa fila
         let rowCells = grid.filter(c => c.rowId === targetRow);
         
         if (rowCells.length >= word.length) {
@@ -290,31 +299,26 @@ let particles = [];
 function createWordParticles(originPoints) {
     const particleCount = 25;
     
-    // Geometría y materiales básicos compartidos para mejor rendimiento
     const pGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const velocities = [];
 
-    // Colores patrios
     const colorWhite = new THREE.Color(0xffffff);
     const colorBlue = new THREE.Color(0x87cefa);
 
     originPoints.forEach((pos, index) => {
-        // Generar partículas por cada letra de la palabra encontrada
         for(let i=0; i<particleCount; i++) {
             const pIndex = i * 3;
             positions[pIndex] = pos.x;
             positions[pIndex+1] = pos.y;
             positions[pIndex+2] = pos.z;
 
-            // Alternar colores blanco y celeste
             const chosenColor = Math.random() > 0.5 ? colorWhite : colorBlue;
             colors[pIndex] = chosenColor.r;
             colors[pIndex+1] = chosenColor.g;
             colors[pIndex+2] = chosenColor.b;
 
-            // Velocidades hacia el exterior con dispersión
             velocities.push(new THREE.Vector3(
                 (Math.random() - 0.5) * 1.5,
                 (Math.random() - 0.5) * 1.5,
@@ -334,12 +338,12 @@ function createWordParticles(originPoints) {
         });
 
         const pSystem = new THREE.Points(pGeo, pMat);
-        mainGlobe.add(pSystem); // Se añaden al globo para que roten con él
+        mainGlobe.add(pSystem);
 
         particles.push({
             system: pSystem,
             velocities: velocities,
-            life: 1.0 // Factor de vida/opacidad
+            life: 1.0 
         });
     });
 }
@@ -347,7 +351,7 @@ function createWordParticles(originPoints) {
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const pData = particles[i];
-        pData.life -= 0.02; // Se van desvaneciendo poco a poco
+        pData.life -= 0.02; 
 
         if (pData.life <= 0) {
             mainGlobe.remove(pData.system);
@@ -358,7 +362,6 @@ function updateParticles() {
             pData.system.material.opacity = pData.life;
             const posArr = pData.system.geometry.attributes.position.array;
             
-            // Mover cada partícula según su velocidad asignada
             for (let j = 0; j < pData.velocities.length; j++) {
                 posArr[j*3] += pData.velocities[j].x;
                 posArr[j*3+1] += pData.velocities[j].y;
@@ -377,7 +380,7 @@ let isDrawing = false;
 let currentSelectionPath = [];
 let selectedWordString = "";
 let foundWords = new Set();
-let winSpinTimer = 0; // Temporizador para la rotación final rápida
+let winSpinTimer = 0; 
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -435,7 +438,7 @@ function addLetterToPath(sprite) {
     currentSelectionPath.push(sprite);
     selectedWordString += sprite.userData.char;
 
-    sprite.material.color.set(0x00e5ff); // Celeste patrio
+    sprite.material.color.set(0x00e5ff); 
 
     previewEl.style.display = "block";
     previewEl.innerText = selectedWordString;
@@ -459,7 +462,6 @@ function verifyCurrentWord() {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
 
-        // Extraer posiciones del mundo real de las letras correctas para detonar partículas allí
         const originPositions = currentSelectionPath.map(sprite => sprite.position.clone());
         createWordParticles(originPositions);
 
@@ -468,9 +470,8 @@ function verifyCurrentWord() {
             sprite.userData.isFound = true;       
         });
 
-        // Condición de Victoria: Se encontraron las 12 palabras
         if(foundWords.size === words.length) {
-            winSpinTimer = 8000; // 8 segundos activos (en milisegundos)
+            winSpinTimer = 8000; 
         }
 
         resetSelectionState(true);
@@ -577,17 +578,13 @@ function animate() {
     const deltaTime = now - lastTime;
     lastTime = now;
 
-    // Actualizaciones físicas de partículas
     updateParticles();
 
-    // Rotación condicionada por el estado de victoria
     if (winSpinTimer > 0) {
         winSpinTimer -= deltaTime;
-        // Rota rápidamente de manera festiva en los ejes Y y X
         mainGlobe.rotation.y += 0.08;
         mainGlobe.rotation.x += 0.02;
     } else if (joystickActive) {
-        // MEJORA: Velocidad del Joystick reducida a la mitad (multiplicador bajó de 0.04 a 0.02)
         mainGlobe.rotation.y += joystickVector.x * 0.02;
         mainGlobe.rotation.x += joystickVector.y * 0.02;
     }
@@ -600,7 +597,7 @@ window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    updateCameraDistance(); // Re-evalúa distancia de la esfera al rotar o redimensionar
+    updateCameraDistance(); // Recalcula la distancia óptima dinámicamente al girar la pantalla
 });
 
 </script>
