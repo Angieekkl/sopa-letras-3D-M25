@@ -249,7 +249,7 @@ document.body.appendChild(renderer.domElement);
 scene.add(new THREE.AmbientLight(0xffffff, 1.3));
 
 /* =========================
-   GRUPO PRINCIPAL Y FILTRO RADICAL
+   GRUPO PRINCIPAL Y CONFIGURACIÓN GEOMÉTRICA
 ========================= */
 const mainGlobe = new THREE.Group();
 scene.add(mainGlobe);
@@ -300,8 +300,8 @@ function spherical(lat, lon, radius){
 }
 
 const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
-const rows = 22;
-const maxCols = 44;
+const GRID_ROWS = 20; 
+const GRID_COLS = 40; 
 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 let grid = [];
 let wordPositionsMapping = {}; 
@@ -311,95 +311,102 @@ function generateGridData() {
     wordPositionsMapping = {};
     words.forEach(w => wordPositionsMapping[w] = []);
 
-    for(let i=0; i<rows; i++){
-        const lat = 90 - i * 180/(rows-1);
-        let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
-        if (colsInRow < 1) colsInRow = 1; 
-
-        for(let j=0; j<colsInRow; j++){
-            const lon = j * 360/colsInRow;
-            grid.push({ 
-                id: grid.length,
-                lat, lon, 
-                char: letters[Math.floor(Math.random()*letters.length)], 
+    // 1. Crear matriz plana bidimensional de control estricto (Evita deformaciones polares de tipo espiral)
+    let continuousId = 0;
+    let flatGrid2D = [];
+    for(let r=0; r<GRID_ROWS; r++){
+        flatGrid2D[r] = [];
+        for(let c=0; c<GRID_COLS; c++){
+            let cellObj = {
+                id: continuousId++,
+                row: r,
+                col: c,
+                char: letters[Math.floor(Math.random()*letters.length)],
                 isFixed: false,
-                rowId: i, colId: j, colsInRow: colsInRow
-            });
+                isFound: false
+            };
+            flatGrid2D[r][c] = cellObj;
         }
     }
+
+    // 2. Direcciones vectoriales rígidas y rectas ("|", "-", "\", "/")
+    const vectors = [
+        { r: 0,  c: 1  }, // Horizontal derechamente normal ->
+        { r: 0,  c: -1 }, // Horizontal derechamente inversa <-
+        { r: 1,  c: 0  }, // Vertical hacia abajo | v
+        { r: -1, c: 0  }, // Vertical hacia arriba | ^
+        { r: 1,  c: 1  }, // Diagonal descendente recta \
+        { r: -1, c: 1  }  // Diagonal ascendente recta /
+    ];
 
     words.forEach(word => {
         let placed = false;
         let attempts = 0;
-        const directions = ["NORMAL", "REVERSO", "VERTICAL_DOWN", "VERTICAL_UP"];
 
-        while(!placed && attempts < 250) {
+        while(!placed && attempts < 400) {
             attempts++;
-            const dir = directions[Math.floor(Math.random() * directions.length)];
+            const vec = vectors[Math.floor(Math.random() * vectors.length)];
             
-            if (dir === "NORMAL" || dir === "REVERSO") {
-                const targetRow = Math.floor(Math.random() * (rows - 4)) + 2;
-                let rowCells = grid.filter(c => c.rowId === targetRow);
-                
-                if (rowCells.length >= word.length) {
-                    const startCol = Math.floor(Math.random() * (rowCells.length - word.length));
-                    let canPlace = true;
-                    
-                    for(let k=0; k<word.length; k++) {
-                        let cell = rowCells[startCol + k];
-                        let charToPlace = (dir === "NORMAL") ? word[k] : word[word.length - 1 - k];
-                        if(cell.isFixed && cell.char !== charToPlace) { canPlace = false; break; }
-                    }
-                    if(canPlace) {
-                        for(let k=0; k<word.length; k++) {
-                            let cell = rowCells[startCol + k];
-                            cell.char = (dir === "NORMAL") ? word[k] : word[word.length - 1 - k];
-                            cell.isFixed = true; 
-                            wordPositionsMapping[word].push(cell.id);
-                        }
-                        placed = true;
-                    }
-                }
-            } else {
-                const startRow = Math.floor(Math.random() * (rows - word.length - 4)) + 2;
-                const randomLonNorm = Math.random() * 360;
-                
-                let verticalCells = [];
-                let canPlace = true;
+            const startRow = Math.floor(Math.random() * GRID_ROWS);
+            const startCol = Math.floor(Math.random() * GRID_COLS);
 
-                for(let r = 0; r < word.length; r++) {
-                    let currentRow = startRow + r;
-                    let rowCells = grid.filter(c => c.rowId === currentRow);
-                    let closestCell = rowCells.reduce((prev, curr) => Math.abs(curr.lon - randomLonNorm) < Math.abs(prev.lon - randomLonNorm) ? curr : prev);
-                    verticalCells.push(closestCell);
+            let canPlace = true;
+            let cellsToUse = [];
+
+            for(let k=0; k<word.length; k++) {
+                let targetRow = startRow + (vec.r * k);
+                let targetCol = (startCol + (vec.c * k)) % GRID_COLS; // Conexión cilíndrica horizontal limpia
+                if(targetCol < 0) targetCol += GRID_COLS;
+
+                // Bloqueo estricto fuera de bordes verticales polares
+                if(targetRow < 0 || targetRow >= GRID_ROWS) {
+                    canPlace = false;
+                    break;
                 }
 
+                let targetCell = flatGrid2D[targetRow][targetCol];
+                if(targetCell.isFixed && targetCell.char !== word[k]) {
+                    canPlace = false;
+                    break;
+                }
+                cellsToUse.push(targetCell);
+            }
+
+            if(canPlace && cellsToUse.length === word.length) {
                 for(let k=0; k<word.length; k++) {
-                    let charToPlace = (dir === "VERTICAL_DOWN") ? word[k] : word[word.length - 1 - k];
-                    if(verticalCells[k].isFixed && verticalCells[k].char !== charToPlace) { canPlace = false; break; }
+                    cellsToUse[k].char = word[k];
+                    cellsToUse[k].isFixed = true;
+                    wordPositionsMapping[word].push(cellsToUse[k].id);
                 }
-
-                if(canPlace) {
-                    for(let k=0; k<word.length; k++) {
-                        verticalCells[k].char = (dir === "VERTICAL_DOWN") ? word[k] : word[word.length - 1 - k];
-                        verticalCells[k].isFixed = true;
-                        wordPositionsMapping[word].push(verticalCells[k].id);
-                    }
-                    placed = true;
-                }
+                placed = true;
             }
         }
     });
 
-    // SOLUCIÓN SANITIZANTE RADICAL: 
-    // Removemos la vocal 'U' de todo el relleno aleatorio. Sin 'U', es físicamente imposible armar "CULO", "PUTO", etc.
-    // Solo se conservan las 'U' que pertenezcan a palabras fijas del juego (como REVOLUCION o JUNTA).
-    const safeReplacements = ["A", "E", "I", "O", "M", "P", "T", "R", "S"];
-    for(let i = 0; i < grid.length; i++) {
-        if(!grid[i].isFixed && grid[i].char === "U") {
-            grid[i].char = safeReplacements[Math.floor(Math.random() * safeReplacements.length)];
+    // 3. Convertir matriz bidimensional planar en lista indexada esférica
+    let tempGridList = [];
+    for(let r=0; r<GRID_ROWS; r++){
+        const lat = 78 - r * (156 / (GRID_ROWS - 1)); // Margen de seguridad para no aplastar letras en los extremos absolutos
+        for(let c=0; c<GRID_COLS; c++){
+            const lon = c * (360 / GRID_COLS);
+            let cell = flatGrid2D[r][c];
+            cell.lat = lat;
+            cell.lon = lon;
+            tempGridList.push(cell);
         }
     }
+
+    // 4. ESCUDO SANITIZANTE DEFINITIVO CONTRAL EL INSULTO:
+    // Pisa radicalmente todas las 'U' aleatorias libres por letras neutras.
+    // Al no haber 'U' fuera de las palabras legítimas, es imposible formar palabras obscenas en ningún sentido.
+    const safeReplacements = ["A", "E", "I", "O", "B", "C", "D", "F", "G", "H", "N", "P", "R", "S", "T", "V", "Z"];
+    tempGridList.forEach(cell => {
+        if(!cell.isFixed && cell.char === "U") {
+            cell.char = safeReplacements[Math.floor(Math.random() * safeReplacements.length)];
+        }
+    });
+
+    grid = tempGridList;
 }
 
 function saveFullGridToStorage() {
@@ -412,13 +419,13 @@ function renderGridToScene() {
     letterSprites = [];
 
     const OFFSET = 0.8;
-    grid.forEach((cell, idx)=>{
+    grid.forEach((cell)=>{
         const pos = spherical(cell.lat, cell.lon, RADIUS+OFFSET);
         const sprite = createLetter(cell.char);
         sprite.position.copy(pos);
         
         sprite.userData = { 
-            id: idx,
+            id: cell.id,
             char: cell.char, 
             isLetter: true,
             isFound: cell.isFound || false 
@@ -463,20 +470,40 @@ function loadProgress() {
 }
 
 /* =========================
-   SISTEMA DE PISTAS (AJUSTADO A 2 MINUTOS)
+   PROTOCOLO CRONOMETRADO DE PISTAS (2m -> 1m -> 30s)
 ========================= */
 let hintTimer = 0;
-const HINT_COOLDOWN = 2 * 60 * 1000; // MODIFICACIÓN: Ajustado exactamente a 2 minutos (120000 ms)
+let hintPhase = 1; // Controla la etapa de la alerta en la que se encuentra el jugador estancado
 
 function processHintSystem(deltaTime) {
     hintTimer += deltaTime;
-    if (hintTimer >= HINT_COOLDOWN) {
-        hintTimer = 0; 
-        triggerVioletFlashHint();
+
+    if (hintPhase === 1) {
+        // Alerta inicial: 2 Minutos (120.000 ms)
+        if (hintTimer >= 2 * 60 * 1000) {
+            triggerProtocolHint();
+        }
+    } else if (hintPhase === 2) {
+        // Segunda Alerta: +1 Minuto posterior (60.000 ms)
+        if (hintTimer >= 1 * 60 * 1000) {
+            triggerProtocolHint();
+        }
+    } else if (hintPhase === 3) {
+        // Tercera Alerta Crítica: +30 Segundos posteriores (30.000 ms)
+        if (hintTimer >= 30 * 1000) {
+            triggerProtocolHint();
+        }
     }
 }
 
-function triggerVioletFlashHint() {
+function triggerProtocolHint() {
+    hintTimer = 0; // Limpia el contador para medir el intervalo del siguiente paso del protocolo
+    
+    // Si ya completó la fase 3, se queda en fase 3 repitiendo el aviso cada 30s hasta que resuelva una palabra
+    if (hintPhase < 3) {
+        hintPhase++; 
+    }
+
     let hiddenWords = words.filter(w => !foundWords.has(w));
     if (hiddenWords.length === 0) return;
 
@@ -488,13 +515,11 @@ function triggerVioletFlashHint() {
     let flashCount = 0;
     let interval = setInterval(() => {
         flashCount++;
-        
         letterSprites.forEach(sprite => {
             if (cellIds.includes(sprite.userData.id) && !sprite.userData.isFound) {
                 sprite.material.color.set(flashCount % 2 === 1 ? 0x9400D3 : 0xffffff);
             }
         });
-
         if (flashCount >= 6) { 
             clearInterval(interval);
         }
@@ -663,12 +688,12 @@ function verifyCurrentWord() {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
         
-        let cellIds = wordPositionsMapping[wordMatched];
-        if(cellIds) {
-            cellIds.forEach(id => {
-                grid[id].isFound = true;
-            });
-        }
+        // Registrar en memoria global persistente de celdas
+        grid.forEach(cell => {
+            if(wordPositionsMapping[wordMatched].includes(cell.id)){
+                cell.isFound = true;
+            }
+        });
 
         saveProgress(); 
         createWordParticlesCentric();
@@ -707,9 +732,13 @@ function verifyCurrentWord() {
 function resetSelectionState(wasCorrect) {
     selectedWordString = "";
     currentSelectionPath = [];
+    
     if (wasCorrect) {
-        hintTimer = 0; // REINICIO: Cuando el jugador halla una palabra con éxito, la cuenta regresiva de los 2 min vuelve a cero.
+        // REINICIO COMPLETO DEL PROTOCOLO: Al acertar, vuelve a foja cero la fase y el tiempo
+        hintTimer = 0; 
+        hintPhase = 1; 
     }
+    
     setTimeout(() => {
         if(!isDrawing) previewEl.style.display = "none";
     }, wasCorrect ? 500 : 0);
@@ -808,6 +837,7 @@ function startGame() {
     }, 600);
     gameStarted = true;
     hintTimer = 0; 
+    hintPhase = 1;
 }
 
 function resetGameTotal() {
@@ -825,6 +855,7 @@ function resetGameTotal() {
     
     winSpinTimer = 0;
     hintTimer = 0;
+    hintPhase = 1;
     gameStarted = false;
 
     document.getElementById("start-screen").style.display = "flex";
