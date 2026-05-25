@@ -54,12 +54,12 @@ li.done{
     opacity: 0.7;
 }
 
-/* --- JOYSTICK VIRTUAL REPOSICIONADO, CENTRADO Y AGRANDADO --- */
+/* --- CORRECCIÓN 1: JOYSTICK EN MÓDULO ERGONÓMICO MÁS AL CENTRO --- */
 #joystick-container {
     position: absolute;
-    bottom: 80px; /* Separado bastante del borde inferior */
-    right: 80px;  /* Separado bastante del borde derecho para centrarlo más */
-    width: 140px; /* Más grande para comodidad táctil */
+    bottom: 120px; /* MODIFICACIÓN: Subido bastante para alejarlo del borde inferior */
+    right: 120px;  /* MODIFICACIÓN: Desplazado al centro para alejarlo del borde derecho */
+    width: 140px; 
     height: 140px;
     background: rgba(255, 255, 255, 0.15);
     border: 4px solid rgba(135, 206, 250, 0.7);
@@ -81,7 +81,6 @@ li.done{
     transition: transform 0.05s linear;
 }
 
-/* Indicador de palabra flotante */
 #word-preview {
     position: absolute;
     bottom: 40px;
@@ -100,11 +99,11 @@ li.done{
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
-/* --- PANTALLA DE VICTORIA (WIN SCENARIO) --- */
-#win-screen {
+/* --- CORRECCIÓN 2: PANTALLAS DE INTERFAZ GENERAL DE FLUJO (MENÚS) --- */
+.game-overlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(14, 22, 32, 0.95);
+    background: rgba(14, 22, 32, 0.96);
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -112,11 +111,46 @@ li.done{
     justify-content: center;
     color: white;
     text-align: center;
-    padding: 20px;
+    padding: 24px;
     box-sizing: border-box;
+    transition: opacity 0.6s ease;
+}
+
+.game-overlay h2 {
+    font-size: 38px;
+    color: #87cefa;
+    margin: 0 0 15px 0;
+    text-shadow: 0 0 15px rgba(135, 206, 250, 0.4);
+}
+
+.game-overlay p {
+    font-size: 18px;
+    max-width: 550px;
+    line-height: 1.6;
+    margin: 0 0 30px 0;
+    color: #e0e6ed;
+}
+
+.btn-game {
+    background: linear-gradient(135deg, #87cefa, #0056b3);
+    color: white;
+    border: none;
+    padding: 15px 45px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(135,206,250,0.4);
+    transition: transform 0.2s;
+}
+
+.btn-game:active {
+    transform: scale(0.95);
+}
+
+#win-screen {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 1s ease;
 }
 
 #win-screen.active {
@@ -125,41 +159,8 @@ li.done{
 }
 
 #win-screen h2 {
-    font-size: 45px;
     color: #7CFC00;
-    margin: 0 0 10px 0;
     text-shadow: 0 0 20px rgba(124, 252, 0, 0.5);
-}
-
-#win-screen h3 {
-    font-size: 24px;
-    color: #87cefa;
-    margin: 0 0 20px 0;
-}
-
-#win-screen p {
-    font-size: 18px;
-    max-width: 500px;
-    line-height: 1.6;
-    margin: 0 0 40px 0;
-    color: #e0e6ed;
-}
-
-#btn-restart {
-    background: linear-gradient(135deg, #87cefa, #0056b3);
-    color: white;
-    border: none;
-    padding: 15px 40px;
-    font-size: 20px;
-    font-weight: bold;
-    border-radius: 30px;
-    cursor: pointer;
-    box-shadow: 0 5px 20px rgba(135,206,250,0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-#btn-restart:active {
-    transform: scale(0.95);
 }
 
 /* Adaptabilidad horizontal/móvil */
@@ -167,16 +168,21 @@ li.done{
     #ui { max-width: 240px; padding: 8px; top: 8px; left: 8px; }
     h1 { font-size: 16px; margin-bottom: 4px; }
     ul { font-size: 12px; line-height: 1.3; }
-    #joystick-container { bottom: 30px; right: 50px; width: 100px; height: 100px; }
+    #joystick-container { bottom: 40px; right: 80px; width: 100px; height: 100px; }
     #joystick-knob { width: 40px; height: 40px; }
-    #win-screen h2 { font-size: 32px; }
-    #win-screen h3 { font-size: 18px; }
-    #win-screen p { font-size: 14px; margin-bottom: 15px; }
+    .game-overlay h2 { font-size: 26px; }
+    .game-overlay p { font-size: 14px; margin-bottom: 12px; }
 }
 </style>
 </head>
 
 <body>
+
+<div id="start-screen" class="game-overlay">
+    <h2>Sopa de Letras 3D<br>🇦🇷 25 de Mayo 🇦🇷</h2>
+    <p>Encontrá las 12 palabras patrias arrastrando el dedo o mouse para unir las letras. Si la palabra es correcta se pintará de <b>Verde</b>, de lo contrario se iluminará de <b>Rojo</b>.<br><br>¡Usá el joystick virtual para rotar la esfera y explorar todos sus lados!</p>
+    <button class="btn-game" onclick="startGame()">Comenzar Desafío</button>
+</div>
 
 <div id="ui">
 <h1>🇦🇷 Sopa de Letras 3D</h1>
@@ -202,11 +208,11 @@ li.done{
 
 <div id="word-preview"></div>
 
-<div id="win-screen">
+<div id="win-screen" class="game-overlay">
     <h2>¡Felicidades!</h2>
     <h3>Encontraste las 12 palabras</h3>
     <p>Espero que hayas disfrutado del juego, les deseamos un feliz 25 de Mayo de parte de todo el equipo.</p>
-    <button id="btn-restart" onclick="resetGameTotal()">Jugar de nuevo</button>
+    <button class="btn-game" onclick="resetGameTotal()">Jugar de nuevo</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -221,19 +227,18 @@ scene.background = new THREE.Color(0x0e1620);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
 
-// CORRECCIÓN 1: Achicamos más la esfera alejando la cámara proporcionalmente para centrarla estéticamente
 function updateCameraDistance() {
     const aspect = window.innerWidth / window.innerHeight;
     const isMobile = window.innerWidth < 1024;
 
     if (isMobile) {
         if (aspect > 1) {
-            camera.position.z = 210; // Antes 185 -> Más lejos para margen estético perfecto
+            camera.position.z = 210; 
         } else {
-            camera.position.z = 165; // Antes 145 -> Ajuste vertical impecable
+            camera.position.z = 165; 
         }
     } else {
-        camera.position.z = 125; // Antes 110 -> PC
+        camera.position.z = 125; 
     }
 }
 updateCameraDistance();
@@ -295,14 +300,17 @@ function spherical(lat, lon, radius){
     );
 }
 
-// SUGERENCIA 2: Filtro de seguridad anti malas palabras rudimentario por combinación de subcadenas
-const forbiddenSubstrings = ["MIERDA", "PEDO", "PUTO", "PUTA", "CONCHA", "ORTO", "CULO", "PENE", "TETA", "FORRO", "CHUPA", "BOLUDO"];
+// FILTRO AGREGADO: Lista negra robusta extendida con insultos y lunfardo habitual de Argentina
+const forbiddenSubstrings = [
+    "MIERDA", "PEDO", "PUTO", "PUTA", "CONCHA", "ORTO", "CULO", "PENE", "TETA", 
+    "FORRO", "CHUPA", "BOLUDO", "PAJA", "PAJERO", "CHOTO", "CHOTA", "GATO", 
+    "TERESO", "TROLO", "CONCHUDO", "FORRA", "PELOTUDO", "PELOTUDA"
+];
 
 function cleanTextString(str) {
     let cleaned = str;
     forbiddenSubstrings.forEach(badWord => {
         while(cleaned.includes(badWord)) {
-            // Reemplaza caracteres centrales de la mala palabra por letras inocuas al azar
             cleaned = cleaned.replace(badWord, "ALMA");
         }
     });
@@ -314,10 +322,14 @@ const rows = 22;
 const maxCols = 44;
 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 let grid = [];
+let wordPositionsMapping = {}; // Registra qué sprites componen físicamente cada palabra para el sistema de pistas
 
 function generateGridData() {
     grid = [];
-    // Generación base aleatoria
+    wordPositionsMapping = {};
+    words.forEach(w => wordPositionsMapping[w] = []);
+
+    // 1. Inicializar grilla base
     for(let i=0; i<rows; i++){
         const lat = 90 - i * 180/(rows-1);
         let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
@@ -326,6 +338,7 @@ function generateGridData() {
         for(let j=0; j<colsInRow; j++){
             const lon = j * 360/colsInRow;
             grid.push({ 
+                id: grid.length,
                 lat, lon, 
                 char: letters[Math.floor(Math.random()*letters.length)], 
                 isFixed: false,
@@ -334,7 +347,7 @@ function generateGridData() {
         }
     }
 
-    // SUGERENCIA 3: Mayor variedad direccional (Normal, Al Revés, Vertical Abajo, Vertical Arriba)
+    // 2. Inyectar las 12 palabras en variadas direcciones
     words.forEach(word => {
         let placed = false;
         let attempts = 0;
@@ -362,14 +375,14 @@ function generateGridData() {
                             let cell = rowCells[startCol + k];
                             cell.char = (dir === "NORMAL") ? word[k] : word[word.length - 1 - k];
                             cell.isFixed = true; 
+                            wordPositionsMapping[word].push(cell.id);
                         }
                         placed = true;
                     }
                 }
             } else {
-                // Orientación Vertical (viaja entre filas indexadas)
                 const startRow = Math.floor(Math.random() * (rows - word.length - 4)) + 2;
-                const randomLonNorm = Math.random() * 360; // Longitud base aproximada para la columna vertical
+                const randomLonNorm = Math.random() * 360;
                 
                 let verticalCells = [];
                 let canPlace = true;
@@ -377,7 +390,6 @@ function generateGridData() {
                 for(let r = 0; r < word.length; r++) {
                     let currentRow = startRow + r;
                     let rowCells = grid.filter(c => c.rowId === currentRow);
-                    // Buscamos la celda cuya longitud esté más cerca de nuestra columna vertical imaginaria
                     let closestCell = rowCells.reduce((prev, curr) => Math.abs(curr.lon - randomLonNorm) < Math.abs(prev.lon - randomLonNorm) ? curr : prev);
                     verticalCells.push(closestCell);
                 }
@@ -391,6 +403,7 @@ function generateGridData() {
                     for(let k=0; k<word.length; k++) {
                         verticalCells[k].char = (dir === "VERTICAL_DOWN") ? word[k] : word[word.length - 1 - k];
                         verticalCells[k].isFixed = true;
+                        wordPositionsMapping[word].push(verticalCells[k].id);
                     }
                     placed = true;
                 }
@@ -398,7 +411,7 @@ function generateGridData() {
         }
     });
 
-    // Filtro de seguridad post-generación para celdas no fijadas
+    // 3. Pasar el filtro sanitario
     let continuousText = grid.map(c => c.char).join("");
     continuousText = cleanTextString(continuousText);
     grid.forEach((cell, idx) => {
@@ -409,7 +422,6 @@ function generateGridData() {
 }
 
 function renderGridToScene() {
-    // Limpieza de objetos anteriores si existen
     letterSprites.forEach(s => mainGlobe.remove(s));
     letterSprites = [];
 
@@ -431,7 +443,7 @@ function renderGridToScene() {
 }
 
 /* =========================
-   AUTOGUARDADO (SUGERENCIA 1)
+   AUTOGUARDADO
 ========================= */
 let foundWords = new Set();
 
@@ -448,36 +460,54 @@ function loadProgress() {
             const uiElem = document.querySelector(`[data-word="${w}"]`);
             if(uiElem) uiElem.classList.add("done");
         });
-
-        // Marcar sprites correspondientes en la escena como ya descubiertos en verde
-        grid.forEach((cell, idx) => {
-            // Si la celda es fija, verificamos si pertenece a alguna de las palabras ya encontradas
-            // Para simplificar y mantener compatibilidad, el cargado visual marca las celdas fijas si su palabra ya fue completada
-            words.forEach(w => {
-                if(foundWords.has(w)) {
-                    // Si el juego se cerró, las pintamos directo tras generar
-                    // Se resolverá dinámicamente una vez renderizado todo en la inicialización
-                }
-            });
-        });
     }
 }
 
-function applyLoadedVisuals() {
-    letterSprites.forEach(sprite => {
-        words.forEach(w => {
-            if(foundWords.has(w)) {
-                // Buscamos si la palabra está deletreada en el camino matemático. 
-                // Por simplicidad en persistencia pura de grillas estáticas aleatorias,
-                // si el cliente cargó partidas previas completadas, dejamos que empiece fresco o limpie.
-            }
-        });
-    });
+/* =========================
+   CORRECCIÓN 3: SISTEMA DE PISTAS DE ASISTENCIA DINÁMICA (5 MINUTOS)
+========================= */
+let hintTimer = 0;
+const HINT_COOLDOWN = 5 * 60 * 1000; // 5 Minutos expresados en milisegundos
+
+function processHintSystem(deltaTime) {
+    hintTimer += deltaTime;
+    if (hintTimer >= HINT_COOLDOWN) {
+        hintTimer = 0; // Reinicia reloj
+        triggerVioletFlashHint();
+    }
 }
 
+function triggerVioletFlashHint() {
+    // Busca qué palabra de la lista fija todavía no fue descubierta por el jugador
+    let hiddenWords = words.filter(w => !foundWords.has(w));
+    if (hiddenWords.length === 0) return;
+
+    // Selecciona una palabra oculta al azar para revelar
+    let chosenWord = hiddenWords[Math.floor(Math.random() * hiddenWords.length)];
+    let cellIds = wordPositionsMapping[chosenWord];
+
+    if(!cellIds || cellIds.length === 0) return;
+
+    // Ejecuta una secuencia de ráfagas/parpadeos veloces en color Violeta
+    let flashCount = 0;
+    let interval = setInterval(() => {
+        flashCount++;
+        
+        letterSprites.forEach(sprite => {
+            if (cellIds.includes(sprite.userData.id) && !sprite.userData.isFound) {
+                // Alterna entre Violeta intenso y Blanco original
+                sprite.material.color.set(flashCount % 2 === 1 ? 0x9400D3 : 0xffffff);
+            }
+        });
+
+        if (flashCount >= 6) { // 6 cambios = 3 destellos completos (encendido/apagado)
+            clearInterval(interval);
+        }
+    }, 250); // Velocidad del parpadeo (cada cuarto de segundo)
+}
 
 /* =========================
-   SISTEMA DE PARTÍCULAS (CONFETI AL CENTRO)
+   SISTEMA DE PARTÍCULAS
 ========================= */
 let particles = [];
 
@@ -522,7 +552,6 @@ function createWordParticlesCentric() {
 
     const pSystem = new THREE.Points(pGeo, pMat);
     scene.add(pSystem); 
-
     particles.push({ system: pSystem, velocities: velocities, life: 1.0 });
 }
 
@@ -549,7 +578,6 @@ function updateParticles() {
     }
 }
 
-
 /* =========================
    MECÁNICA: CONECTAR LETRAS
 ========================= */
@@ -557,6 +585,7 @@ let isDrawing = false;
 let currentSelectionPath = [];
 let selectedWordString = "";
 let winSpinTimer = 0; 
+let gameStarted = false; // Control de flujo inicial
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -570,7 +599,8 @@ function getPointerCoords(e) {
 }
 
 function onPointerStart(e) {
-    if(e.target.closest('#ui') || e.target.closest('#joystick-container') || e.target.closest('#win-screen')) return;
+    if(!gameStarted) return;
+    if(e.target.closest('#ui') || e.target.closest('#joystick-container') || e.target.closest('.game-overlay')) return;
 
     const coords = getPointerCoords(e);
     const hitSprite = getSpriteAtCoords(coords.x, coords.y);
@@ -582,7 +612,7 @@ function onPointerStart(e) {
 }
 
 function onPointerMove(e) {
-    if (!isDrawing) return;
+    if (!isDrawing || !gameStarted) return;
 
     const coords = getPointerCoords(e);
     const hitSprite = getSpriteAtCoords(coords.x, coords.y);
@@ -601,6 +631,7 @@ function onPointerEnd() {
     verifyCurrentWord();
 }
 
+// Vincula las coordenadas de pantalla con el espacio 3D
 function getSpriteAtCoords(clientX, clientY) {
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -624,8 +655,6 @@ function verifyCurrentWord() {
 
     let isCorrect = false;
     let wordMatched = "";
-    
-    // Evaluamos tanto la palabra normal como su lectura invertida por la flexibilidad agregada
     const reversedSelection = selectedWordString.split("").reverse().join("");
 
     for (let w of words) {
@@ -640,7 +669,7 @@ function verifyCurrentWord() {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
         
-        saveProgress(); // Guardado automático inmediato en la memoria local
+        saveProgress(); 
         createWordParticlesCentric();
 
         currentSelectionPath.forEach(sprite => {
@@ -648,12 +677,11 @@ function verifyCurrentWord() {
             sprite.userData.isFound = true;       
         });
 
-        // DETONADOR DE ESCENARIO DE VICTORIA TOTAL (CORRECCIÓN 3)
         if(foundWords.size === words.length) {
             winSpinTimer = 8000; 
             setTimeout(() => {
                 document.getElementById("win-screen").classList.add("active");
-            }, 1200); // Aparece suavemente un segundo después del festejo de rotación central
+            }, 1200); 
         }
 
         resetSelectionState(true);
@@ -683,7 +711,6 @@ function resetSelectionState(wasCorrect) {
     }, wasCorrect ? 500 : 0);
 }
 
-// Eventos de interacción
 window.addEventListener("mousedown", onPointerStart);
 window.addEventListener("mousemove", onPointerMove);
 window.addEventListener("mouseup", onPointerEnd);
@@ -703,12 +730,13 @@ let joystickActive = false;
 let joystickVector = { x: 0, y: 0 };
 
 function handleJoystickStart(e) {
+    if(!gameStarted) return;
     joystickActive = true;
     handleJoystickMove(e);
 }
 
 function handleJoystickMove(e) {
-    if (!joystickActive) return;
+    if (!joystickActive || !gameStarted) return;
     
     const rect = joystickContainer.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -755,22 +783,28 @@ function initGameStructure() {
     buildSphereBackground();
     generateGridData();
     renderGridToScene();
-    loadProgress(); // Intenta recuperar si había un juego colgado
+    loadProgress(); 
+}
+
+function startGame() {
+    // Esconde el panel de bienvenida inicial de manera suave
+    document.getElementById("start-screen").style.opacity = "0";
+    document.getElementById("start-screen").style.pointerEvents = "none";
+    gameStarted = true;
+    hintTimer = 0; // Inicia el conteo de los 5 minutos para las pistas
 }
 
 function resetGameTotal() {
-    // Limpia registros locales por completo para arrancar de cero
     localStorage.removeItem("sopa3d_foundWords");
     foundWords.clear();
     
-    // Restablece estilos del menú CSS
     document.querySelectorAll("#list li").forEach(li => li.classList.remove("done"));
     document.getElementById("win-screen").classList.remove("active");
     
-    // Regenera mapa matemático
     generateGridData();
     renderGridToScene();
     winSpinTimer = 0;
+    hintTimer = 0; 
 }
 
 /* =========================
@@ -787,12 +821,15 @@ function animate() {
 
     updateParticles();
 
+    if (gameStarted) {
+        processHintSystem(deltaTime); // Controla el temporizador de pistas de 5 minutos
+    }
+
     if (winSpinTimer > 0) {
         winSpinTimer -= deltaTime;
         mainGlobe.rotation.y += 0.08;
         mainGlobe.rotation.x += 0.02;
-    } else if (joystickActive) {
-        // CORRECCIÓN 2: Velocidad del Joystick un poco más lenta aún para máxima precisión de búsqueda (de 0.02 a 0.013)
+    } else if (joystickActive && gameStarted) {
         mainGlobe.rotation.y += joystickVector.x * 0.013;
         mainGlobe.rotation.x += joystickVector.y * 0.013;
     }
@@ -800,7 +837,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Inicialización de arranque
 initGameStructure();
 animate();
 
