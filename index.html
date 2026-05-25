@@ -249,7 +249,7 @@ document.body.appendChild(renderer.domElement);
 scene.add(new THREE.AmbientLight(0xffffff, 1.3));
 
 /* =========================
-   GRUPO PRINCIPAL Y FILTRO DE PALABRAS
+   GRUPO PRINCIPAL Y FILTRO RADICAL
 ========================= */
 const mainGlobe = new THREE.Group();
 scene.add(mainGlobe);
@@ -298,12 +298,6 @@ function spherical(lat, lon, radius){
         radius * Math.sin(phi) * Math.sin(theta)
     );
 }
-
-const forbiddenSubstrings = [
-    "MIERDA", "PEDO", "PUTO", "PUTA", "CONCHA", "ORTO", "CULO", "PENE", "TETA", 
-    "FORRO", "CHUPA", "BOLUDO", "PAJA", "PAJERO", "CHOTO", "CHOTA", "GATO", 
-    "TERESO", "TROLO", "CONCHUDO", "FORRA", "PELOTUDO", "PELOTUDA"
-];
 
 const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
 const rows = 22;
@@ -397,37 +391,14 @@ function generateGridData() {
         }
     });
 
-    // NUEVO FILTRO MULTIDIRECCIONAL IMPECABLE (Corregido el error de cierre del loop)
+    // SOLUCIÓN SANITIZANTE RADICAL: 
+    // Removemos la vocal 'U' de todo el relleno aleatorio. Sin 'U', es físicamente imposible armar "CULO", "PUTO", etc.
+    // Solo se conservan las 'U' que pertenezcan a palabras fijas del juego (como REVOLUCION o JUNTA).
+    const safeReplacements = ["A", "E", "I", "O", "M", "P", "T", "R", "S"];
     for(let i = 0; i < grid.length; i++) {
-        if(grid[i].isFixed) continue;
-
-        forbiddenSubstrings.forEach(badWord => {
-            let len = badWord.length;
-            
-            let matchHorizontal = true;
-            for(let k=0; k<len; k++) {
-                let targetIdx = (i + k) % grid.length;
-                if(grid[targetIdx].char !== badWord[k]) { matchHorizontal = false; break; }
-            }
-            if(matchHorizontal) {
-                grid[i].char = "A"; 
-                grid[(i+1)%grid.length].char = "M";
-            }
-
-            let matchVertical = true;
-            let currentCell = grid[i];
-            for(let k=1; k<len; k++) {
-                let nextRow = currentCell.rowId + 1;
-                if(nextRow >= rows) { matchVertical = false; break; }
-                let rowCells = grid.filter(c => c.rowId === nextRow);
-                let closest = rowCells.reduce((prev, curr) => Math.abs(curr.lon - currentCell.lon) < Math.abs(prev.lon - currentCell.lon) ? curr : prev);
-                if(closest.char !== badWord[k]) { matchVertical = false; break; }
-                currentCell = closest;
-            }
-            if(matchVertical) {
-                grid[i].char = "L"; 
-            }
-        });
+        if(!grid[i].isFixed && grid[i].char === "U") {
+            grid[i].char = safeReplacements[Math.floor(Math.random() * safeReplacements.length)];
+        }
     }
 }
 
@@ -492,10 +463,10 @@ function loadProgress() {
 }
 
 /* =========================
-   SISTEMA DE PISTAS (5 MINUTOS)
+   SISTEMA DE PISTAS (AJUSTADO A 2 MINUTOS)
 ========================= */
 let hintTimer = 0;
-const HINT_COOLDOWN = 5 * 60 * 1000; 
+const HINT_COOLDOWN = 2 * 60 * 1000; // MODIFICACIÓN: Ajustado exactamente a 2 minutos (120000 ms)
 
 function processHintSystem(deltaTime) {
     hintTimer += deltaTime;
@@ -736,6 +707,9 @@ function verifyCurrentWord() {
 function resetSelectionState(wasCorrect) {
     selectedWordString = "";
     currentSelectionPath = [];
+    if (wasCorrect) {
+        hintTimer = 0; // REINICIO: Cuando el jugador halla una palabra con éxito, la cuenta regresiva de los 2 min vuelve a cero.
+    }
     setTimeout(() => {
         if(!isDrawing) previewEl.style.display = "none";
     }, wasCorrect ? 500 : 0);
