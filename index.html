@@ -54,11 +54,11 @@ li.done{
     opacity: 0.7;
 }
 
-/* --- CORRECCIÓN 1: JOYSTICK EN MÓDULO ERGONÓMICO MÁS AL CENTRO --- */
+/* --- JOYSTICK VIRTUAL REPOSICIONADO --- */
 #joystick-container {
     position: absolute;
-    bottom: 120px; /* MODIFICACIÓN: Subido bastante para alejarlo del borde inferior */
-    right: 120px;  /* MODIFICACIÓN: Desplazado al centro para alejarlo del borde derecho */
+    bottom: 120px; 
+    right: 120px;  
     width: 140px; 
     height: 140px;
     background: rgba(255, 255, 255, 0.15);
@@ -99,7 +99,7 @@ li.done{
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
-/* --- CORRECCIÓN 2: PANTALLAS DE INTERFAZ GENERAL DE FLUJO (MENÚS) --- */
+/* --- INTERFAZ DE MENÚS (AJUSTE DE FUENTES PEDIDO) --- */
 .game-overlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -116,32 +116,36 @@ li.done{
     transition: opacity 0.6s ease;
 }
 
+/* MODIFICACIÓN: Título un poquito más grande (Antes 38px) */
 .game-overlay h2 {
-    font-size: 38px;
+    font-size: 42px;
     color: #87cefa;
-    margin: 0 0 15px 0;
+    margin: 0 0 20px 0;
     text-shadow: 0 0 15px rgba(135, 206, 250, 0.4);
+    line-height: 1.3;
 }
 
+/* MODIFICACIÓN: Párrafo explicativo más grande y legible (Antes 18px) */
 .game-overlay p {
-    font-size: 18px;
-    max-width: 550px;
-    line-height: 1.6;
-    margin: 0 0 30px 0;
+    font-size: 22px;
+    max-width: 650px;
+    line-height: 1.7;
+    margin: 0 0 35px 0;
     color: #e0e6ed;
 }
 
+/* MODIFICACIÓN: Botón de interacción agrandado en proporción (Antes 20px) */
 .btn-game {
     background: linear-gradient(135deg, #87cefa, #0056b3);
     color: white;
     border: none;
-    padding: 15px 45px;
-    font-size: 20px;
+    padding: 18px 55px;
+    font-size: 24px;
     font-weight: bold;
-    border-radius: 30px;
+    border-radius: 35px;
     cursor: pointer;
-    box-shadow: 0 5px 20px rgba(135,206,250,0.4);
-    transition: transform 0.2s;
+    box-shadow: 0 6px 25px rgba(135,206,250,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-game:active {
@@ -170,8 +174,9 @@ li.done{
     ul { font-size: 12px; line-height: 1.3; }
     #joystick-container { bottom: 40px; right: 80px; width: 100px; height: 100px; }
     #joystick-knob { width: 40px; height: 40px; }
-    .game-overlay h2 { font-size: 26px; }
-    .game-overlay p { font-size: 14px; margin-bottom: 12px; }
+    .game-overlay h2 { font-size: 28px; }
+    .game-overlay p { font-size: 16px; margin-bottom: 15px; }
+    .btn-game { padding: 12px 35px; font-size: 18px; }
 }
 </style>
 </head>
@@ -180,7 +185,7 @@ li.done{
 
 <div id="start-screen" class="game-overlay">
     <h2>Sopa de Letras 3D<br>🇦🇷 25 de Mayo 🇦🇷</h2>
-    <p>Encontrá las 12 palabras patrias arrastrando el dedo o mouse para unir las letras. Si la palabra es correcta se pintará de <b>Verde</b>, de lo contrario se iluminará de <b>Rojo</b>.<br><br>¡Usá el joystick virtual para rotar la esfera y explorar todos sus lados!</p>
+    <p>Encontrá las 12 palabras patrias arrastrando el dedo o el mouse para unir las letras. Si la palabra es correcta se pintará de <b>Verde</b>, de lo contrario se iluminará de <b>Rojo</b>.<br><br>¡Usá el joystick virtual para rotar la esfera y explorar todos sus lados!</p>
     <button class="btn-game" onclick="startGame()">Comenzar Desafío</button>
 </div>
 
@@ -300,7 +305,6 @@ function spherical(lat, lon, radius){
     );
 }
 
-// FILTRO AGREGADO: Lista negra robusta extendida con insultos y lunfardo habitual de Argentina
 const forbiddenSubstrings = [
     "MIERDA", "PEDO", "PUTO", "PUTA", "CONCHA", "ORTO", "CULO", "PENE", "TETA", 
     "FORRO", "CHUPA", "BOLUDO", "PAJA", "PAJERO", "CHOTO", "CHOTA", "GATO", 
@@ -322,14 +326,13 @@ const rows = 22;
 const maxCols = 44;
 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 let grid = [];
-let wordPositionsMapping = {}; // Registra qué sprites componen físicamente cada palabra para el sistema de pistas
+let wordPositionsMapping = {}; 
 
 function generateGridData() {
     grid = [];
     wordPositionsMapping = {};
     words.forEach(w => wordPositionsMapping[w] = []);
 
-    // 1. Inicializar grilla base
     for(let i=0; i<rows; i++){
         const lat = 90 - i * 180/(rows-1);
         let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
@@ -347,7 +350,6 @@ function generateGridData() {
         }
     }
 
-    // 2. Inyectar las 12 palabras en variadas direcciones
     words.forEach(word => {
         let placed = false;
         let attempts = 0;
@@ -411,7 +413,6 @@ function generateGridData() {
         }
     });
 
-    // 3. Pasar el filtro sanitario
     let continuousText = grid.map(c => c.char).join("");
     continuousText = cleanTextString(continuousText);
     grid.forEach((cell, idx) => {
@@ -443,7 +444,7 @@ function renderGridToScene() {
 }
 
 /* =========================
-   AUTOGUARDADO
+   AUTOGUARDADO (SISTEMA MEJORADO)
 ========================= */
 let foundWords = new Set();
 
@@ -464,46 +465,42 @@ function loadProgress() {
 }
 
 /* =========================
-   CORRECCIÓN 3: SISTEMA DE PISTAS DE ASISTENCIA DINÁMICA (5 MINUTOS)
+   SISTEMA DE PISTAS DE ASISTENCIA DINÁMICA (5 MINUTOS)
 ========================= */
 let hintTimer = 0;
-const HINT_COOLDOWN = 5 * 60 * 1000; // 5 Minutos expresados en milisegundos
+const HINT_COOLDOWN = 5 * 60 * 1000; 
 
 function processHintSystem(deltaTime) {
     hintTimer += deltaTime;
     if (hintTimer >= HINT_COOLDOWN) {
-        hintTimer = 0; // Reinicia reloj
+        hintTimer = 0; 
         triggerVioletFlashHint();
     }
 }
 
 function triggerVioletFlashHint() {
-    // Busca qué palabra de la lista fija todavía no fue descubierta por el jugador
     let hiddenWords = words.filter(w => !foundWords.has(w));
     if (hiddenWords.length === 0) return;
 
-    // Selecciona una palabra oculta al azar para revelar
     let chosenWord = hiddenWords[Math.floor(Math.random() * hiddenWords.length)];
     let cellIds = wordPositionsMapping[chosenWord];
 
     if(!cellIds || cellIds.length === 0) return;
 
-    // Ejecuta una secuencia de ráfagas/parpadeos veloces en color Violeta
     let flashCount = 0;
     let interval = setInterval(() => {
         flashCount++;
         
         letterSprites.forEach(sprite => {
             if (cellIds.includes(sprite.userData.id) && !sprite.userData.isFound) {
-                // Alterna entre Violeta intenso y Blanco original
                 sprite.material.color.set(flashCount % 2 === 1 ? 0x9400D3 : 0xffffff);
             }
         });
 
-        if (flashCount >= 6) { // 6 cambios = 3 destellos completos (encendido/apagado)
+        if (flashCount >= 6) { 
             clearInterval(interval);
         }
-    }, 250); // Velocidad del parpadeo (cada cuarto de segundo)
+    }, 250); 
 }
 
 /* =========================
@@ -585,7 +582,7 @@ let isDrawing = false;
 let currentSelectionPath = [];
 let selectedWordString = "";
 let winSpinTimer = 0; 
-let gameStarted = false; // Control de flujo inicial
+let gameStarted = false; 
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -631,7 +628,6 @@ function onPointerEnd() {
     verifyCurrentWord();
 }
 
-// Vincula las coordenadas de pantalla con el espacio 3D
 function getSpriteAtCoords(clientX, clientY) {
     mouse.x = (clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -783,15 +779,22 @@ function initGameStructure() {
     buildSphereBackground();
     generateGridData();
     renderGridToScene();
-    loadProgress(); 
+    
+    // SOLUCIÓN AL BUG: Ya NO cargamos el progreso viejo automáticamente al arrancar la ventana, 
+    // dejamos que el botón de inicio controle la limpieza absoluta para evitar desincronizaciones.
 }
 
 function startGame() {
-    // Esconde el panel de bienvenida inicial de manera suave
+    // CORRECCIÓN CLAVE: Al tocar comenzar, nos aseguramos de limpiar memorias viejas
+    // para que la lista empiece fresca y sincronizada con el mapa actual de la esfera.
+    localStorage.removeItem("sopa3d_foundWords");
+    foundWords.clear();
+    document.querySelectorAll("#list li").forEach(li => li.classList.remove("done"));
+
     document.getElementById("start-screen").style.opacity = "0";
     document.getElementById("start-screen").style.pointerEvents = "none";
     gameStarted = true;
-    hintTimer = 0; // Inicia el conteo de los 5 minutos para las pistas
+    hintTimer = 0; 
 }
 
 function resetGameTotal() {
@@ -822,7 +825,7 @@ function animate() {
     updateParticles();
 
     if (gameStarted) {
-        processHintSystem(deltaTime); // Controla el temporizador de pistas de 5 minutos
+        processHintSystem(deltaTime); 
     }
 
     if (winSpinTimer > 0) {
