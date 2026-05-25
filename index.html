@@ -147,10 +147,6 @@ li.done{
     transform: scale(0.95);
 }
 
-#start-screen {
-    display: flex; /* Se controla dinámicamente por JS */
-}
-
 #win-screen {
     opacity: 0;
     pointer-events: none;
@@ -321,7 +317,6 @@ function generateGridData() {
     wordPositionsMapping = {};
     words.forEach(w => wordPositionsMapping[w] = []);
 
-    // 1. Crear estructura física de celdas
     for(let i=0; i<rows; i++){
         const lat = 90 - i * 180/(rows-1);
         let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
@@ -339,7 +334,6 @@ function generateGridData() {
         }
     }
 
-    // 2. Colocar las 12 palabras legítimas
     words.forEach(word => {
         let placed = false;
         let attempts = 0;
@@ -403,26 +397,23 @@ function generateGridData() {
         }
     });
 
-    // 3. NUEVO FILTRO EN MATRIZ: Evita "CULO" y anexos barriendo vecindades físicas directas
+    // NUEVO FILTRO MULTIDIRECCIONAL IMPECABLE (Corregido el error de cierre del loop)
     for(let i = 0; i < grid.length; i++) {
         if(grid[i].isFixed) continue;
 
         forbiddenSubstrings.forEach(badWord => {
             let len = badWord.length;
             
-            // Evaluar horizontal (Celdas contiguas de la misma fila)
             let matchHorizontal = true;
             for(let k=0; k<len; k++) {
                 let targetIdx = (i + k) % grid.length;
                 if(grid[targetIdx].char !== badWord[k]) { matchHorizontal = false; break; }
             }
             if(matchHorizontal) {
-                // Rompe la palabra pisando con letras aleatorias seguras que no completen el insulto
                 grid[i].char = "A"; 
                 grid[(i+1)%grid.length].char = "M";
             }
 
-            // Evaluar vertical hacia abajo
             let matchVertical = true;
             let currentCell = grid[i];
             for(let k=1; k<len; k++) {
@@ -434,13 +425,12 @@ function generateGridData() {
                 currentCell = closest;
             }
             if(matchVertical) {
-                grid[i].char = "L"; // Sanitiza nodo inicial
+                grid[i].char = "L"; 
             }
-        end});
+        });
     }
 }
 
-// Guarda la estructura del mapa completo en LocalStorage para congelar las posiciones
 function saveFullGridToStorage() {
     localStorage.setItem("sopa3d_frozenGrid", JSON.stringify(grid));
     localStorage.setItem("sopa3d_frozenMapping", JSON.stringify(wordPositionsMapping));
@@ -463,7 +453,6 @@ function renderGridToScene() {
             isFound: cell.isFound || false 
         };
 
-        // Si la palabra ya fue descubierta en guardados previos, la pintamos verde de entrada
         if(sprite.userData.isFound) {
             sprite.material.color.set(0x00ff66);
         }
@@ -474,13 +463,12 @@ function renderGridToScene() {
 }
 
 /* =========================
-   SISTEMA DE AUTOGUARDADO AVANZADO (PERSISTENCIA DE MAPA ACTIVO)
+   SISTEMA DE AUTOGUARDADO AVANZADO
 ========================= */
 let foundWords = new Set();
 
 function saveProgress() {
     localStorage.setItem("sopa3d_foundWords", JSON.stringify([...foundWords]));
-    // Guardamos el estado "isFound" dentro de las celdas de la grilla congelada
     saveFullGridToStorage();
 }
 
@@ -494,12 +482,11 @@ function loadProgress() {
         grid = JSON.parse(savedGrid);
         wordPositionsMapping = JSON.parse(savedMapping);
 
-        // Tachamos visualmente los elementos del menú flotante
         foundWords.forEach(w => {
             const uiElem = document.querySelector(`[data-word="${w}"]`);
             if(uiElem) uiElem.classList.add("done");
         });
-        return true; // Retorna true si reconstruyó una partida idéntica guardada
+        return true; 
     }
     return false;
 }
@@ -705,7 +692,6 @@ function verifyCurrentWord() {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
         
-        // Buscamos las celdas en la grilla y las congelamos como encontradas
         let cellIds = wordPositionsMapping[wordMatched];
         if(cellIds) {
             cellIds.forEach(id => {
@@ -821,21 +807,18 @@ window.addEventListener("touchend", handleJoystickEnd);
 
 
 /* =========================
-   LOGICA DEL FLUJO DE PANTALLAS SOLICITADA
+   LÓGICA DE FLUJO DE PANTALLAS
 ========================= */
 function initGameStructure() {
     buildSphereBackground();
     
-    // CORRECCIÓN FLUJO: Intentamos cargar partida guardada previa
     const baselineRecovered = loadProgress();
 
     if (baselineRecovered && foundWords.size > 0 && foundWords.size < words.length) {
-        // Si hay una partida en curso (no terminada), saltamos la intro y vamos directo a la accion
         renderGridToScene();
         document.getElementById("start-screen").style.display = "none";
         gameStarted = true;
     } else {
-        // Si el juego es completamente nuevo o ya se habia ganado antes, generamos mapa de cero y mostramos intro
         generateGridData();
         saveFullGridToStorage();
         renderGridToScene();
@@ -854,7 +837,6 @@ function startGame() {
 }
 
 function resetGameTotal() {
-    // 1. Limpieza absoluta de registros para arrancar el ciclo de cero
     localStorage.removeItem("sopa3d_foundWords");
     localStorage.removeItem("sopa3d_frozenGrid");
     localStorage.removeItem("sopa3d_frozenMapping");
@@ -863,7 +845,6 @@ function resetGameTotal() {
     document.querySelectorAll("#list li").forEach(li => li.classList.remove("done"));
     document.getElementById("win-screen").classList.remove("active");
     
-    // 2. Generamos un mapa completamente nuevo
     generateGridData();
     saveFullGridToStorage();
     renderGridToScene();
@@ -872,7 +853,6 @@ function resetGameTotal() {
     hintTimer = 0;
     gameStarted = false;
 
-    // 3. Traemos de vuelta la pantalla de inicio para reiniciar el ciclo como pediste
     document.getElementById("start-screen").style.display = "flex";
     document.getElementById("start-screen").style.opacity = "1";
 }
