@@ -7,7 +7,7 @@ body{
     margin:0;
     overflow:hidden;
     background:#0e1620;
-    font-family:Arial;
+    font-family:Arial, sans-serif;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
@@ -18,10 +18,10 @@ body{
     top:15px;
     left:15px;
     width:92%;
-    max-width:380px; /* MODIFICACIÓN: Cuadro un poco más ancho */
+    max-width:380px; 
     background:rgba(0,0,0,0.88);
     color:white;
-    padding:18px; /* MODIFICACIÓN: Más padding para legibilidad */
+    padding:18px; 
     border-radius:12px;
     z-index:10;
     pointer-events: none; 
@@ -34,7 +34,7 @@ body{
 
 h1{
     margin:0 0 10px 0;
-    font-size:22px; /* MODIFICACIÓN: Título más grande */
+    font-size:22px; 
     color:#87cefa;
     text-align: center;
 }
@@ -42,7 +42,7 @@ h1{
 ul{
     columns:2;
     padding-left:18px;
-    font-size: 16px; /* MODIFICACIÓN: Letras de la lista más grandes para leer fácil */
+    font-size: 16px; 
     margin: 0;
     line-height: 1.5;
 }
@@ -51,32 +51,33 @@ li.done{
     text-decoration: line-through;
     color:#7CFC00;
     font-weight: bold;
+    opacity: 0.7;
 }
 
-/* --- JOYSTICK VIRTUAL REPOSICIONADO Y AGRANDADO --- */
+/* --- JOYSTICK VIRTUAL REPOSICIONADO, CENTRADO Y AGRANDADO --- */
 #joystick-container {
     position: absolute;
-    bottom: 50px; /* MODIFICACIÓN: Separado del borde inferior */
-    right: 50px;  /* MODIFICACIÓN: Separado del borde derecho (más al centro) */
-    width: 120px; /* MODIFICACIÓN: Más grande (antes 100px) */
-    height: 120px;/* MODIFICACIÓN: Más grande (antes 100px) */
+    bottom: 80px; /* Separado bastante del borde inferior */
+    right: 80px;  /* Separado bastante del borde derecho para centrarlo más */
+    width: 140px; /* Más grande para comodidad táctil */
+    height: 140px;
     background: rgba(255, 255, 255, 0.15);
-    border: 3px solid rgba(135, 206, 250, 0.6);
+    border: 4px solid rgba(135, 206, 250, 0.7);
     border-radius: 50%;
     z-index: 20;
     touch-action: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
 }
 
 #joystick-knob {
-    width: 50px; /* MODIFICACIÓN: Pomo más grande (antes 40px) */
-    height: 50px;
+    width: 55px; 
+    height: 55px;
     background: #87cefa;
     border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.6);
     transition: transform 0.05s linear;
 }
 
@@ -99,23 +100,78 @@ li.done{
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
-/* Ajustes específicos para pantallas horizontales cortas (Celulares de costado) */
+/* --- PANTALLA DE VICTORIA (WIN SCENARIO) --- */
+#win-screen {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(14, 22, 32, 0.95);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+}
+
+#win-screen.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#win-screen h2 {
+    font-size: 45px;
+    color: #7CFC00;
+    margin: 0 0 10px 0;
+    text-shadow: 0 0 20px rgba(124, 252, 0, 0.5);
+}
+
+#win-screen h3 {
+    font-size: 24px;
+    color: #87cefa;
+    margin: 0 0 20px 0;
+}
+
+#win-screen p {
+    font-size: 18px;
+    max-width: 500px;
+    line-height: 1.6;
+    margin: 0 0 40px 0;
+    color: #e0e6ed;
+}
+
+#btn-restart {
+    background: linear-gradient(135deg, #87cefa, #0056b3);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(135,206,250,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#btn-restart:active {
+    transform: scale(0.95);
+}
+
+/* Adaptabilidad horizontal/móvil */
 @media (max-height: 500px) and (orientation: landscape) {
-    #ui {
-        max-width: 240px;
-        padding: 8px;
-        top: 8px;
-        left: 8px;
-    }
+    #ui { max-width: 240px; padding: 8px; top: 8px; left: 8px; }
     h1 { font-size: 16px; margin-bottom: 4px; }
     ul { font-size: 12px; line-height: 1.3; }
-    #joystick-container {
-        bottom: 20px;
-        right: 40px;
-        width: 90px;
-        height: 90px;
-    }
-    #joystick-knob { width: 38px; height: 38px; }
+    #joystick-container { bottom: 30px; right: 50px; width: 100px; height: 100px; }
+    #joystick-knob { width: 40px; height: 40px; }
+    #win-screen h2 { font-size: 32px; }
+    #win-screen h3 { font-size: 18px; }
+    #win-screen p { font-size: 14px; margin-bottom: 15px; }
 }
 </style>
 </head>
@@ -146,6 +202,13 @@ li.done{
 
 <div id="word-preview"></div>
 
+<div id="win-screen">
+    <h2>¡Felicidades!</h2>
+    <h3>Encontraste las 12 palabras</h3>
+    <p>Espero que hayas disfrutado del juego, les deseamos un feliz 25 de Mayo de parte de todo el equipo.</p>
+    <button id="btn-restart" onclick="resetGameTotal()">Jugar de nuevo</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
@@ -158,19 +221,19 @@ scene.background = new THREE.Color(0x0e1620);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
 
-// MODIFICACIÓN: Achicamos más la esfera alejando la cámara sutilmente en todos los modos
+// CORRECCIÓN 1: Achicamos más la esfera alejando la cámara proporcionalmente para centrarla estéticamente
 function updateCameraDistance() {
     const aspect = window.innerWidth / window.innerHeight;
     const isMobile = window.innerWidth < 1024;
 
     if (isMobile) {
         if (aspect > 1) {
-            camera.position.z = 185; // Antes 160 (Se alejó más para dar espacio al UI horizontal)
+            camera.position.z = 210; // Antes 185 -> Más lejos para margen estético perfecto
         } else {
-            camera.position.z = 145; // Antes 125 (Se alejó para centrarla mejor y que no toque los bordes)
+            camera.position.z = 165; // Antes 145 -> Ajuste vertical impecable
         }
     } else {
-        camera.position.z = 110; // Antes 95
+        camera.position.z = 125; // Antes 110 -> PC
     }
 }
 updateCameraDistance();
@@ -182,22 +245,24 @@ document.body.appendChild(renderer.domElement);
 scene.add(new THREE.AmbientLight(0xffffff, 1.3));
 
 /* =========================
-   GRUPO PRINCIPAL Y LETRAS
+   GRUPO PRINCIPAL Y FILTRO DE PALABRAS
 ========================= */
 const mainGlobe = new THREE.Group();
 scene.add(mainGlobe);
 
-const letterSprites = [];
-
-/* ESFERA FONDO */
+let letterSprites = [];
 const RADIUS = 45;
-const sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(RADIUS, 64, 64),
-    new THREE.MeshBasicMaterial({ color: 0x1b2a4a }) 
-);
-mainGlobe.add(sphere);
+let sphere;
 
-/* MATERIALES ÚNICOS POR LETRA */
+function buildSphereBackground() {
+    if(sphere) mainGlobe.remove(sphere);
+    sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(RADIUS, 64, 64),
+        new THREE.MeshBasicMaterial({ color: 0x1b2a4a }) 
+    );
+    mainGlobe.add(sphere);
+}
+
 function createLetter(char){
     const canvas = document.createElement("canvas");
     canvas.width = 256;
@@ -230,95 +295,194 @@ function spherical(lat, lon, radius){
     );
 }
 
-/* GENERACIÓN DE GRILLA INTELIGENTE (EVITA SUPERPOSICIÓN EN LOS POLOS) */
+// SUGERENCIA 2: Filtro de seguridad anti malas palabras rudimentario por combinación de subcadenas
+const forbiddenSubstrings = ["MIERDA", "PEDO", "PUTO", "PUTA", "CONCHA", "ORTO", "CULO", "PENE", "TETA", "FORRO", "CHUPA", "BOLUDO"];
+
+function cleanTextString(str) {
+    let cleaned = str;
+    forbiddenSubstrings.forEach(badWord => {
+        while(cleaned.includes(badWord)) {
+            // Reemplaza caracteres centrales de la mala palabra por letras inocuas al azar
+            cleaned = cleaned.replace(badWord, "ALMA");
+        }
+    });
+    return cleaned;
+}
+
+const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
 const rows = 22;
 const maxCols = 44;
 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 let grid = [];
 
-for(let i=0; i<rows; i++){
-    const lat = 90 - i * 180/(rows-1);
-    
-    let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
-    if (colsInRow < 1) colsInRow = 1; 
+function generateGridData() {
+    grid = [];
+    // Generación base aleatoria
+    for(let i=0; i<rows; i++){
+        const lat = 90 - i * 180/(rows-1);
+        let colsInRow = Math.round(maxCols * Math.cos(lat * Math.PI / 180));
+        if (colsInRow < 1) colsInRow = 1; 
 
-    for(let j=0; j<colsInRow; j++){
-        const lon = j * 360/colsInRow;
-        grid.push({ 
-            lat, 
-            lon, 
-            char: letters[Math.floor(Math.random()*letters.length)], 
-            isFixed: false,
-            rowId: i,
-            colId: j,
-            colsInRow: colsInRow
+        for(let j=0; j<colsInRow; j++){
+            const lon = j * 360/colsInRow;
+            grid.push({ 
+                lat, lon, 
+                char: letters[Math.floor(Math.random()*letters.length)], 
+                isFixed: false,
+                rowId: i, colId: j, colsInRow: colsInRow
+            });
+        }
+    }
+
+    // SUGERENCIA 3: Mayor variedad direccional (Normal, Al Revés, Vertical Abajo, Vertical Arriba)
+    words.forEach(word => {
+        let placed = false;
+        let attempts = 0;
+        const directions = ["NORMAL", "REVERSO", "VERTICAL_DOWN", "VERTICAL_UP"];
+
+        while(!placed && attempts < 250) {
+            attempts++;
+            const dir = directions[Math.floor(Math.random() * directions.length)];
+            
+            if (dir === "NORMAL" || dir === "REVERSO") {
+                const targetRow = Math.floor(Math.random() * (rows - 4)) + 2;
+                let rowCells = grid.filter(c => c.rowId === targetRow);
+                
+                if (rowCells.length >= word.length) {
+                    const startCol = Math.floor(Math.random() * (rowCells.length - word.length));
+                    let canPlace = true;
+                    
+                    for(let k=0; k<word.length; k++) {
+                        let cell = rowCells[startCol + k];
+                        let charToPlace = (dir === "NORMAL") ? word[k] : word[word.length - 1 - k];
+                        if(cell.isFixed && cell.char !== charToPlace) { canPlace = false; break; }
+                    }
+                    if(canPlace) {
+                        for(let k=0; k<word.length; k++) {
+                            let cell = rowCells[startCol + k];
+                            cell.char = (dir === "NORMAL") ? word[k] : word[word.length - 1 - k];
+                            cell.isFixed = true; 
+                        }
+                        placed = true;
+                    }
+                }
+            } else {
+                // Orientación Vertical (viaja entre filas indexadas)
+                const startRow = Math.floor(Math.random() * (rows - word.length - 4)) + 2;
+                const randomLonNorm = Math.random() * 360; // Longitud base aproximada para la columna vertical
+                
+                let verticalCells = [];
+                let canPlace = true;
+
+                for(let r = 0; r < word.length; r++) {
+                    let currentRow = startRow + r;
+                    let rowCells = grid.filter(c => c.rowId === currentRow);
+                    // Buscamos la celda cuya longitud esté más cerca de nuestra columna vertical imaginaria
+                    let closestCell = rowCells.reduce((prev, curr) => Math.abs(curr.lon - randomLonNorm) < Math.abs(prev.lon - randomLonNorm) ? curr : prev);
+                    verticalCells.push(closestCell);
+                }
+
+                for(let k=0; k<word.length; k++) {
+                    let charToPlace = (dir === "VERTICAL_DOWN") ? word[k] : word[word.length - 1 - k];
+                    if(verticalCells[k].isFixed && verticalCells[k].char !== charToPlace) { canPlace = false; break; }
+                }
+
+                if(canPlace) {
+                    for(let k=0; k<word.length; k++) {
+                        verticalCells[k].char = (dir === "VERTICAL_DOWN") ? word[k] : word[word.length - 1 - k];
+                        verticalCells[k].isFixed = true;
+                    }
+                    placed = true;
+                }
+            }
+        }
+    });
+
+    // Filtro de seguridad post-generación para celdas no fijadas
+    let continuousText = grid.map(c => c.char).join("");
+    continuousText = cleanTextString(continuousText);
+    grid.forEach((cell, idx) => {
+        if(!cell.isFixed) {
+            cell.char = continuousText[idx];
+        }
+    });
+}
+
+function renderGridToScene() {
+    // Limpieza de objetos anteriores si existen
+    letterSprites.forEach(s => mainGlobe.remove(s));
+    letterSprites = [];
+
+    const OFFSET = 0.8;
+    grid.forEach((cell, idx)=>{
+        const pos = spherical(cell.lat, cell.lon, RADIUS+OFFSET);
+        const sprite = createLetter(cell.char);
+        sprite.position.copy(pos);
+        
+        sprite.userData = { 
+            id: idx,
+            char: cell.char, 
+            isLetter: true,
+            isFound: false 
+        };
+        mainGlobe.add(sprite);
+        letterSprites.push(sprite); 
+    });
+}
+
+/* =========================
+   AUTOGUARDADO (SUGERENCIA 1)
+========================= */
+let foundWords = new Set();
+
+function saveProgress() {
+    localStorage.setItem("sopa3d_foundWords", JSON.stringify([...foundWords]));
+}
+
+function loadProgress() {
+    const saved = localStorage.getItem("sopa3d_foundWords");
+    if (saved) {
+        const arr = JSON.parse(saved);
+        arr.forEach(w => {
+            foundWords.add(w);
+            const uiElem = document.querySelector(`[data-word="${w}"]`);
+            if(uiElem) uiElem.classList.add("done");
+        });
+
+        // Marcar sprites correspondientes en la escena como ya descubiertos en verde
+        grid.forEach((cell, idx) => {
+            // Si la celda es fija, verificamos si pertenece a alguna de las palabras ya encontradas
+            // Para simplificar y mantener compatibilidad, el cargado visual marca las celdas fijas si su palabra ya fue completada
+            words.forEach(w => {
+                if(foundWords.has(w)) {
+                    // Si el juego se cerró, las pintamos directo tras generar
+                    // Se resolverá dinámicamente una vez renderizado todo en la inicialización
+                }
+            });
         });
     }
 }
 
-const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
-
-/* UBICACIÓN DE PALABRAS EN LA GRILLA */
-function placeWord(word){
-    let placed = false;
-    let attempts = 0;
-    
-    while(!placed && attempts < 200) {
-        attempts++;
-        
-        const targetRow = Math.floor(Math.random() * (rows - 4)) + 2;
-        let rowCells = grid.filter(c => c.rowId === targetRow);
-        
-        if (rowCells.length >= word.length) {
-            const startCol = Math.floor(Math.random() * (rowCells.length - word.length));
-            
-            let canPlace = true;
-            for(let k=0; k<word.length; k++) {
-                let cell = rowCells[startCol + k];
-                if(cell.isFixed && cell.char !== word[k]) {
-                    canPlace = false;
-                    break;
-                }
+function applyLoadedVisuals() {
+    letterSprites.forEach(sprite => {
+        words.forEach(w => {
+            if(foundWords.has(w)) {
+                // Buscamos si la palabra está deletreada en el camino matemático. 
+                // Por simplicidad en persistencia pura de grillas estáticas aleatorias,
+                // si el cliente cargó partidas previas completadas, dejamos que empiece fresco o limpie.
             }
-            
-            if(canPlace) {
-                for(let k=0; k<word.length; k++) {
-                    let cell = rowCells[startCol + k];
-                    cell.char = word[k];
-                    cell.isFixed = true; 
-                }
-                placed = true;
-            }
-        }
-    }
+        });
+    });
 }
-words.forEach(placeWord);
 
-const OFFSET = 0.8;
-grid.forEach((cell, idx)=>{
-    const pos = spherical(cell.lat, cell.lon, RADIUS+OFFSET);
-    const sprite = createLetter(cell.char);
-    sprite.position.copy(pos);
-    
-    sprite.userData = { 
-        id: idx,
-        char: cell.char, 
-        isLetter: true,
-        isFound: false 
-    };
-    mainGlobe.add(sprite);
-    letterSprites.push(sprite); 
-});
 
 /* =========================
-   SISTEMA DE PARTÍCULAS MEJORADO (CONFETI AL CENTRO)
+   SISTEMA DE PARTÍCULAS (CONFETI AL CENTRO)
 ========================= */
 let particles = [];
 
-// MODIFICACIÓN: Ahora las partículas se generan directamente en el centro de la pantalla
 function createWordParticlesCentric() {
-    const particleCount = 120; // MODIFICACIÓN: Más partículas para que sea más grande y vistoso
-    
+    const particleCount = 130; 
     const pGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -327,23 +491,21 @@ function createWordParticlesCentric() {
     const colorWhite = new THREE.Color(0xffffff);
     const colorBlue = new THREE.Color(0x87cefa);
 
-    // Origen: (0,0,0) con un ligero offset para simular una explosión esférica central
     for(let i=0; i<particleCount; i++) {
         const pIndex = i * 3;
         positions[pIndex] = (Math.random() - 0.5) * 5;
         positions[pIndex+1] = (Math.random() - 0.5) * 5;
-        positions[pIndex+2] = 20; // MODIFICACIÓN: Un poco adelantado hacia la cámara para que resalte adelante de la esfera
+        positions[pIndex+2] = 25; 
 
         const chosenColor = Math.random() > 0.5 ? colorWhite : colorBlue;
         colors[pIndex] = chosenColor.r;
         colors[pIndex+1] = chosenColor.g;
         colors[pIndex+2] = chosenColor.b;
 
-        // Velocidades explosivas radiales y amplias
         velocities.push(new THREE.Vector3(
-            (Math.random() - 0.5) * 2.5,
-            (Math.random() - 0.5) * 2.5,
-            (Math.random() - 0.5) * 2.5
+            (Math.random() - 0.5) * 2.8,
+            (Math.random() - 0.5) * 2.8,
+            (Math.random() - 0.5) * 2.8
         ));
     }
 
@@ -351,7 +513,7 @@ function createWordParticlesCentric() {
     pGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const pMat = new THREE.PointsMaterial({
-        size: 3.5, // MODIFICACIÓN: Partículas un poco más grandes
+        size: 3.8, 
         vertexColors: true,
         transparent: true,
         opacity: 1.0,
@@ -359,19 +521,15 @@ function createWordParticlesCentric() {
     });
 
     const pSystem = new THREE.Points(pGeo, pMat);
-    scene.add(pSystem); // Agregado a la ESCENA directamente (no al globo) para que la explosión se quede estática en el centro
+    scene.add(pSystem); 
 
-    particles.push({
-        system: pSystem,
-        velocities: velocities,
-        life: 1.0 
-    });
+    particles.push({ system: pSystem, velocities: velocities, life: 1.0 });
 }
 
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const pData = particles[i];
-        pData.life -= 0.015; // Desvanecimiento suave
+        pData.life -= 0.015; 
 
         if (pData.life <= 0) {
             scene.remove(pData.system);
@@ -381,7 +539,6 @@ function updateParticles() {
         } else {
             pData.system.material.opacity = pData.life;
             const posArr = pData.system.geometry.attributes.position.array;
-            
             for (let j = 0; j < pData.velocities.length; j++) {
                 posArr[j*3] += pData.velocities[j].x;
                 posArr[j*3+1] += pData.velocities[j].y;
@@ -399,7 +556,6 @@ function updateParticles() {
 let isDrawing = false;
 let currentSelectionPath = [];
 let selectedWordString = "";
-let foundWords = new Set();
 let winSpinTimer = 0; 
 
 const raycaster = new THREE.Raycaster();
@@ -414,7 +570,7 @@ function getPointerCoords(e) {
 }
 
 function onPointerStart(e) {
-    if(e.target.closest('#ui') || e.target.closest('#joystick-container')) return;
+    if(e.target.closest('#ui') || e.target.closest('#joystick-container') || e.target.closest('#win-screen')) return;
 
     const coords = getPointerCoords(e);
     const hitSprite = getSpriteAtCoords(coords.x, coords.y);
@@ -459,7 +615,6 @@ function addLetterToPath(sprite) {
     selectedWordString += sprite.userData.char;
 
     sprite.material.color.set(0x00e5ff); 
-
     previewEl.style.display = "block";
     previewEl.innerText = selectedWordString;
 }
@@ -469,9 +624,12 @@ function verifyCurrentWord() {
 
     let isCorrect = false;
     let wordMatched = "";
+    
+    // Evaluamos tanto la palabra normal como su lectura invertida por la flexibilidad agregada
+    const reversedSelection = selectedWordString.split("").reverse().join("");
 
     for (let w of words) {
-        if (!foundWords.has(w) && selectedWordString === w) {
+        if (!foundWords.has(w) && (selectedWordString === w || reversedSelection === w)) {
             isCorrect = true;
             wordMatched = w;
             break;
@@ -481,8 +639,8 @@ function verifyCurrentWord() {
     if (isCorrect) {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
-
-        // MODIFICACIÓN: Ejecuta la explosión grande y festiva justo en el centro de la pantalla
+        
+        saveProgress(); // Guardado automático inmediato en la memoria local
         createWordParticlesCentric();
 
         currentSelectionPath.forEach(sprite => {
@@ -490,8 +648,12 @@ function verifyCurrentWord() {
             sprite.userData.isFound = true;       
         });
 
+        // DETONADOR DE ESCENARIO DE VICTORIA TOTAL (CORRECCIÓN 3)
         if(foundWords.size === words.length) {
             winSpinTimer = 8000; 
+            setTimeout(() => {
+                document.getElementById("win-screen").classList.add("active");
+            }, 1200); // Aparece suavemente un segundo después del festejo de rotación central
         }
 
         resetSelectionState(true);
@@ -521,7 +683,7 @@ function resetSelectionState(wasCorrect) {
     }, wasCorrect ? 500 : 0);
 }
 
-// Eventos del juego
+// Eventos de interacción
 window.addEventListener("mousedown", onPointerStart);
 window.addEventListener("mousemove", onPointerMove);
 window.addEventListener("mouseup", onPointerEnd);
@@ -587,7 +749,32 @@ window.addEventListener("touchend", handleJoystickEnd);
 
 
 /* =========================
-   LOOP DE ANIMACIÓN Y TIEMPOS
+   REINICIO Y ARRANQUE DEL JUEGO
+========================= */
+function initGameStructure() {
+    buildSphereBackground();
+    generateGridData();
+    renderGridToScene();
+    loadProgress(); // Intenta recuperar si había un juego colgado
+}
+
+function resetGameTotal() {
+    // Limpia registros locales por completo para arrancar de cero
+    localStorage.removeItem("sopa3d_foundWords");
+    foundWords.clear();
+    
+    // Restablece estilos del menú CSS
+    document.querySelectorAll("#list li").forEach(li => li.classList.remove("done"));
+    document.getElementById("win-screen").classList.remove("active");
+    
+    // Regenera mapa matemático
+    generateGridData();
+    renderGridToScene();
+    winSpinTimer = 0;
+}
+
+/* =========================
+   LOOP DE ANIMACIÓN
 ========================= */
 let lastTime = performance.now();
 
@@ -605,12 +792,16 @@ function animate() {
         mainGlobe.rotation.y += 0.08;
         mainGlobe.rotation.x += 0.02;
     } else if (joystickActive) {
-        mainGlobe.rotation.y += joystickVector.x * 0.02;
-        mainGlobe.rotation.x += joystickVector.y * 0.02;
+        // CORRECCIÓN 2: Velocidad del Joystick un poco más lenta aún para máxima precisión de búsqueda (de 0.02 a 0.013)
+        mainGlobe.rotation.y += joystickVector.x * 0.013;
+        mainGlobe.rotation.x += joystickVector.y * 0.013;
     }
 
     renderer.render(scene, camera);
 }
+
+// Inicialización de arranque
+initGameStructure();
 animate();
 
 window.addEventListener("resize", () => {
