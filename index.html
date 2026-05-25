@@ -249,6 +249,14 @@ document.body.appendChild(renderer.domElement);
 scene.add(new THREE.AmbientLight(0xffffff, 1.3));
 
 /* =========================
+   RAYCASTER: AJUSTE DE PRECISIÓN QUIRÚRGICA
+========================= */
+const raycaster = new THREE.Raycaster();
+// SOLUCIÓN AL FALSO POSITIVO: Reducimos drásticamente el área invisible del puntero sobre Sprites planos.
+// Ahora exige pasar exactamente por el núcleo de la letra, ignorando las esquinas vacías de los lados.
+raycaster.params.Sprite = { threshold: 1.5 }; 
+
+/* =========================
    GRUPO PRINCIPAL Y CONFIGURACIÓN GEOMÉTRICA
 ========================= */
 const mainGlobe = new THREE.Group();
@@ -273,7 +281,8 @@ function createLetter(char){
     canvas.height = 256;
     const ctx = canvas.getContext("2d");
 
-    ctx.font = "bold 85px Arial";
+    // Optimizamos el tamaño relativo para dar más margen libre ("aire") entre casilleros
+    ctx.font = "bold 95px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff"; 
@@ -285,7 +294,7 @@ function createLetter(char){
     mat.depthWrite = false;
 
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(6.5,6.5,6.5);
+    sprite.scale.set(6.2, 6.2, 6.2);
     return sprite;
 }
 
@@ -301,7 +310,7 @@ function spherical(lat, lon, radius){
 
 const words = ["REVOLUCION","CABILDO","PATRIA","MORENO","SAAVEDRA","ESCARAPELA","VIRREY","JUNTA","LIBERTAD","ARGENTINA","LOCRO","EMPANADAS"];
 const GRID_ROWS = 20; 
-const GRID_COLS = 40; 
+const GRID_COLS = 36; // REDUCCIÓN ESTRATÉGICA: Más espacio horizontal libre para evitar colisiones accidentales por cercanía
 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 let grid = [];
 let wordPositionsMapping = {}; 
@@ -311,7 +320,6 @@ function generateGridData() {
     wordPositionsMapping = {};
     words.forEach(w => wordPositionsMapping[w] = []);
 
-    // 1. Crear matriz plana bidimensional de control estricto (Evita deformaciones polares de tipo espiral)
     let continuousId = 0;
     let flatGrid2D = [];
     for(let r=0; r<GRID_ROWS; r++){
@@ -329,14 +337,13 @@ function generateGridData() {
         }
     }
 
-    // 2. Direcciones vectoriales rígidas y rectas ("|", "-", "\", "/")
     const vectors = [
-        { r: 0,  c: 1  }, // Horizontal derechamente normal ->
-        { r: 0,  c: -1 }, // Horizontal derechamente inversa <-
-        { r: 1,  c: 0  }, // Vertical hacia abajo | v
-        { r: -1, c: 0  }, // Vertical hacia arriba | ^
-        { r: 1,  c: 1  }, // Diagonal descendente recta \
-        { r: -1, c: 1  }  // Diagonal ascendente recta /
+        { r: 0,  c: 1  }, 
+        { r: 0,  c: -1 }, 
+        { r: 1,  c: 0  }, 
+        { r: -1, c: 0  }, 
+        { r: 1,  c: 1  }, 
+        { r: -1, c: 1  }  
     ];
 
     words.forEach(word => {
@@ -355,10 +362,9 @@ function generateGridData() {
 
             for(let k=0; k<word.length; k++) {
                 let targetRow = startRow + (vec.r * k);
-                let targetCol = (startCol + (vec.c * k)) % GRID_COLS; // Conexión cilíndrica horizontal limpia
+                let targetCol = (startCol + (vec.c * k)) % GRID_COLS; 
                 if(targetCol < 0) targetCol += GRID_COLS;
 
-                // Bloqueo estricto fuera de bordes verticales polares
                 if(targetRow < 0 || targetRow >= GRID_ROWS) {
                     canPlace = false;
                     break;
@@ -383,10 +389,9 @@ function generateGridData() {
         }
     });
 
-    // 3. Convertir matriz bidimensional planar en lista indexada esférica
     let tempGridList = [];
     for(let r=0; r<GRID_ROWS; r++){
-        const lat = 78 - r * (156 / (GRID_ROWS - 1)); // Margen de seguridad para no aplastar letras en los extremos absolutos
+        const lat = 75 - r * (150 / (GRID_ROWS - 1)); 
         for(let c=0; c<GRID_COLS; c++){
             const lon = c * (360 / GRID_COLS);
             let cell = flatGrid2D[r][c];
@@ -396,9 +401,6 @@ function generateGridData() {
         }
     }
 
-    // 4. ESCUDO SANITIZANTE DEFINITIVO CONTRAL EL INSULTO:
-    // Pisa radicalmente todas las 'U' aleatorias libres por letras neutras.
-    // Al no haber 'U' fuera de las palabras legítimas, es imposible formar palabras obscenas en ningún sentido.
     const safeReplacements = ["A", "E", "I", "O", "B", "C", "D", "F", "G", "H", "N", "P", "R", "S", "T", "V", "Z"];
     tempGridList.forEach(cell => {
         if(!cell.isFixed && cell.char === "U") {
@@ -473,36 +475,23 @@ function loadProgress() {
    PROTOCOLO CRONOMETRADO DE PISTAS (2m -> 1m -> 30s)
 ========================= */
 let hintTimer = 0;
-let hintPhase = 1; // Controla la etapa de la alerta en la que se encuentra el jugador estancado
+let hintPhase = 1; 
 
 function processHintSystem(deltaTime) {
     hintTimer += deltaTime;
 
     if (hintPhase === 1) {
-        // Alerta inicial: 2 Minutos (120.000 ms)
-        if (hintTimer >= 2 * 60 * 1000) {
-            triggerProtocolHint();
-        }
+        if (hintTimer >= 2 * 60 * 1000) triggerProtocolHint();
     } else if (hintPhase === 2) {
-        // Segunda Alerta: +1 Minuto posterior (60.000 ms)
-        if (hintTimer >= 1 * 60 * 1000) {
-            triggerProtocolHint();
-        }
+        if (hintTimer >= 1 * 60 * 1000) triggerProtocolHint();
     } else if (hintPhase === 3) {
-        // Tercera Alerta Crítica: +30 Segundos posteriores (30.000 ms)
-        if (hintTimer >= 30 * 1000) {
-            triggerProtocolHint();
-        }
+        if (hintTimer >= 30 * 1000) triggerProtocolHint();
     }
 }
 
 function triggerProtocolHint() {
-    hintTimer = 0; // Limpia el contador para medir el intervalo del siguiente paso del protocolo
-    
-    // Si ya completó la fase 3, se queda en fase 3 repitiendo el aviso cada 30s hasta que resuelva una palabra
-    if (hintPhase < 3) {
-        hintPhase++; 
-    }
+    hintTimer = 0; 
+    if (hintPhase < 3) hintPhase++; 
 
     let hiddenWords = words.filter(w => !foundWords.has(w));
     if (hiddenWords.length === 0) return;
@@ -520,9 +509,7 @@ function triggerProtocolHint() {
                 sprite.material.color.set(flashCount % 2 === 1 ? 0x9400D3 : 0xffffff);
             }
         });
-        if (flashCount >= 6) { 
-            clearInterval(interval);
-        }
+        if (flashCount >= 6) clearInterval(interval);
     }, 250); 
 }
 
@@ -599,7 +586,7 @@ function updateParticles() {
 }
 
 /* =========================
-   MECÁNICA: CONECTAR LETRAS
+   MECÁNICA: CONECTAR LETRAS CON CONTROL EUCLIDIANO STRICTOR
 ========================= */
 let isDrawing = false;
 let currentSelectionPath = [];
@@ -607,9 +594,12 @@ let selectedWordString = "";
 let winSpinTimer = 0; 
 let gameStarted = false; 
 
-const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const previewEl = document.getElementById("word-preview");
+
+// FILTRO DE DISTANCIA MÁXIMA EN UN ENTORNO 3D CURVO:
+// Evita saltos fantasma provocados por la perspectiva visual de la cámara en los bordes de fuga.
+const MAX_ALLOWED_DISTANCE_3D = 14.5; 
 
 function getPointerCoords(e) {
     if (e.touches && e.touches.length > 0) {
@@ -640,6 +630,19 @@ function onPointerMove(e) {
     if (hitSprite && !hitSprite.userData.isFound) {
         const alreadyInPath = currentSelectionPath.some(s => s.userData.id === hitSprite.userData.id);
         if (!alreadyInPath) {
+            
+            // FILTRO DE PROXIMIDAD GEOMÉTRICA (Blindaje anti-letras fantasma)
+            if (currentSelectionPath.length > 0) {
+                const lastSprite = currentSelectionPath[currentSelectionPath.length - 1];
+                const distance3D = lastSprite.position.distanceTo(hitSprite.position);
+                
+                // Si la letra detectada por el raycaster está demasiado lejos físicamente,
+                // significa que la perspectiva enganchó una letra de fondo por error. Se ignora.
+                if (distance3D > MAX_ALLOWED_DISTANCE_3D) {
+                    return; 
+                }
+            }
+
             addLetterToPath(hitSprite);
         }
     }
@@ -688,7 +691,6 @@ function verifyCurrentWord() {
         foundWords.add(wordMatched);
         document.querySelector(`[data-word="${wordMatched}"]`).classList.add("done");
         
-        // Registrar en memoria global persistente de celdas
         grid.forEach(cell => {
             if(wordPositionsMapping[wordMatched].includes(cell.id)){
                 cell.isFound = true;
@@ -729,12 +731,21 @@ function verifyCurrentWord() {
     }
 }
 
+function removeLastLetterFromPath() {
+    if (currentSelectionPath.length <= 1) return;
+    const removedSprite = currentSelectionPath.pop();
+    if (!removedSprite.userData.isFound) {
+        removedSprite.material.color.set(0xffffff);
+    }
+    selectedWordString = selectedWordString.slice(0, -1);
+    previewEl.innerText = selectedWordString;
+}
+
 function resetSelectionState(wasCorrect) {
     selectedWordString = "";
     currentSelectionPath = [];
     
     if (wasCorrect) {
-        // REINICIO COMPLETO DEL PROTOCOLO: Al acertar, vuelve a foja cero la fase y el tiempo
         hintTimer = 0; 
         hintPhase = 1; 
     }
